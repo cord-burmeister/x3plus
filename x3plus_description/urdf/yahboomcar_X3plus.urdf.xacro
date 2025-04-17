@@ -1,0 +1,418 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="yahboomcar_X3plus" xmlns:xacro="http://wiki.ros.org/xacro" xmlns:gz="http://gazebosim.org/schema">
+  <!-- define the list of relevant args -->
+  <!-- <xacro:if value="${namespace == 'None'}">
+        <xacro:property name="ns" value="" />
+      </xacro:if>
+      <xacro:unless value="${namespace == 'None'}">
+          <xacro:property name="ns" value="${namespace}/" />
+      </xacro:unless> -->
+
+    <material name="Green">
+        <color rgba="0 0.7 0 1"/>
+    </material>
+    <material name="White">
+        <color rgba="0.7 0.7 0.7 1"/>
+    </material>
+    <xacro:property name="ns" value="$(arg ns)"/>
+
+    <xacro:property name="wheel_radius" value="0.05" />
+
+
+    <link name="base_footprint"/>
+
+
+    <link name="base_link">
+        <inertial>
+            <origin xyz="-0.0304416859098744 4.23384368655101E-05 0.0448234503408059" rpy="0 0 0"/>
+            <mass value="1.0754239466482"/>
+            <inertia
+                    ixx="0.0208831789264125"
+                    ixy="2.4618093127858E-06"
+                    ixz="0.00616019290028669"
+                    iyy="0.0265621377486244"
+                    iyz="-1.10079499865282E-06"
+                    izz="0.0129535610833954"/>
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                    <mesh filename="package://x3plus_description/meshes/X3plus/visual/base-link-core.STL"/>
+            </geometry>
+            <material name="">
+                <color rgba="0 0.7 0 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                    <mesh filename="package://x3plus_description/meshes/X3plus/collision/base-link-core.STL"/>
+            </geometry>
+        </collision>
+    </link>
+
+
+    <joint name="base_joint" type="fixed">
+        <parent link="base_footprint" />
+        <child link="base_link" />
+        <origin xyz="0.0 0.0 0.076" rpy="0 0 0" />
+    </joint>
+
+    <!-- <link name="imu_link"/> -->
+    <!-- common link-->
+    <xacro:macro name="common_link" params="name material path *origin">
+        <link name="${name}">
+            <visual>
+                <geometry>
+                    <mesh filename="package://x3plus_description/meshes/${path}/visual/${name}.STL"/>
+                </geometry>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+                <material name="${material}"/>
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh filename="package://x3plus_description/meshes/${path}/collision/${name}.STL"/>
+                </geometry>
+                <origin xyz="0 0 0" rpy="0 0 0"/>
+            </collision>
+            <xacro:insert_block name="origin"/>
+        </link>
+    </xacro:macro>
+    <!-- revolute joint-->
+    <xacro:macro name="revolute_joint" params="name parent child xyz rpy axisZ lower upper">
+        <joint name="${name}" type="revolute">
+            <parent link="${parent}"/>
+            <child link="${child}"/>
+            <origin xyz="${xyz}" rpy="${rpy}"/>
+            <axis xyz="0 0 ${axisZ}"/>
+            <limit lower="${lower}" upper="${upper}" effort="100" velocity="1"/>
+        </joint>
+    </xacro:macro>
+
+    <!-- continuous joint-->
+    <xacro:macro name="continuous_joint" params="name parent child xyz rpy mimic">
+        <joint name="${name}" type="continuous">
+            <parent link="${parent}"/>
+            <child link="${child}"/>
+            <origin xyz="${xyz}" rpy="${rpy}"/>
+            <axis xyz="0 0 1"/>
+            <mimic joint="grip_joint" multiplier="${mimic}"/>
+        </joint>
+    </xacro:macro>
+
+    <!-- fixed joint-->
+    <xacro:macro name="fixed_joint" params="name parent child xyz rpy">
+        <joint name="${name}" type="fixed">
+            <parent link="${parent}"/>
+            <child link="${child}"/>
+            <origin xyz="${xyz}" rpy="${rpy}"/>
+        </joint>
+    </xacro:macro>
+
+      <!-- common mecanum wheel link-->
+    <xacro:macro name="common_mecanum_wheel_link" params="name material fdir *origin">
+        <link name="${name}">
+            <visual>
+                <geometry>
+                    <mesh filename="package://x3plus_description/meshes/X3plus/visual/${name}.STL" />
+                </geometry>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <material name="${material}" />
+            </visual>
+
+            <collision>
+                <pose>0 0 0 0 0 0</pose>
+                <geometry>
+                    <sphere radius="0.032391999999999997" />
+                </geometry>
+            </collision>
+            <xacro:insert_block name="origin" />
+        </link>
+
+        <gazebo reference="${name}">
+            <collision>
+                <surface>
+                    <contact>
+                        <ode />
+                      </contact>
+                  <friction>
+                    <ode>
+                      <mu>1.0</mu>
+                      <mu2>0.0</mu2>
+                      <fdir1 gz:expressed_in="base_footprint">${fdir}</fdir1>
+                    </ode>
+                  </friction>
+                </surface>
+              </collision>
+            <!-- <mu1>1</mu1>
+            <mu2>0</mu2>
+            <fdir1 gz:expressed_in='base_footprint'>${fdir}</fdir1> -->
+        </gazebo>
+    
+    </xacro:macro>
+
+    <!-- continuous joint-->
+    <xacro:macro name="wheel_continuous_joint" params="name parent child xyz rpy axis">
+        <joint name="${name}" type="continuous">
+            <parent link="${parent}" />
+            <child link="${child}" />
+            <origin xyz="${xyz}" rpy="${rpy}" />
+            <axis xyz="${axis}" />
+            <limit lower="${-pi}" upper="${pi}" effort="100" velocity="5" />
+        </joint>
+    </xacro:macro>
+
+    <!-- <common_link name="base_link" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="-0.0304416859098744 4.23384368655101E-05 0.0448234503408059" rpy="0 0 0"/>
+            <mass value="1.0754239466482"/>
+            <inertia
+                    ixx="0.0208831789264125"
+                    ixy="2.4618093127858E-06"
+                    ixz="0.00616019290028669"
+                    iyy="0.0265621377486244"
+                    iyz="-1.10079499865282E-06"
+                    izz="0.0129535610833954"/>
+        </inertial>
+    </common_link>
+    <fixed_joint name="base_joint" parent="base_footprint" child="base_link" xyz="0.0 0.0 0.076" rpy="0 0 0"/> -->
+    <!-- <fixed_joint name="base_imu" parent="base_link" child="imu_link" xyz="0.001 0.017 0.0322" rpy="0 3.1415 1.5707"/> -->
+
+    <xacro:common_link name="laser_link" material="White" path="sensor">
+        <inertial>
+            <origin xyz="-0.0176558922685589 0.000671805271544437 0.0219302095894866" rpy="0 0 0"/>
+            <mass value="0.0483909504209895"/>
+            <inertia ixx="1.58456966399128E-05" ixy="-4.23913983850005E-07" ixz="-2.09597897904374E-07"
+                     iyy="3.89262522903605E-05" iyz="3.24809725932687E-07" izz="4.86230801106223E-05"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:fixed_joint name="laser_joint" parent="base_link" child="laser_link" xyz="0.10478 0 0.0471" rpy="0 0 0"/>
+    <xacro:common_link name="camera_link" material="White" path="sensor">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="0"/>
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:fixed_joint name="camera_joint" parent="base_link" child="camera_link" xyz="-0.043645 0 0.41955" rpy="0 0 0"/>
+
+    <xacro:common_link name="arm_link1" material="White" path="X3plus">
+        <inertial>
+            <origin xyz="1.99179507982521E-05 -5.98354652829568E-05 0.0114289358828097" rpy="0 0 0"/>
+            <mass value="0.0279545499871709"/>
+            <inertia
+                    ixx="1.19144359314975E-05"
+                    ixy="-9.26068510046816E-09"
+                    ixz="3.16060516198683E-09"
+                    iyy="1.05642517915377E-05"
+                    iyz="2.69674403668579E-08"
+                    izz="1.49639510661413E-05"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint1" parent="base_link" child="arm_link1" xyz="0.09825 0 0.102" rpy="0 0 0" axisZ="-1"
+                    lower="-${pi/2}" upper="${pi/2}"/>
+    <xacro:common_link name="arm_link2" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.024903 -0.0022632 -0.00066663" rpy="0 0 0"/>
+            <mass value="0.031605"/>
+            <inertia
+                    ixx="5.8495E-06"
+                    ixy="-8.8092E-07"
+                    ixz="1.5336E-07"
+                    iyy="2.667E-05"
+                    iyz="7.1365E-09"
+                    izz="2.4695E-05"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint2" parent="arm_link1" child="arm_link2" xyz="0 0 0.0405"
+                    rpy="-${pi/2} 0 0" axisZ="-1" lower="-${pi/2}" upper="${pi/2}"/>
+    <xacro:common_link name="arm_link3" material="White" path="X3plus">
+        <inertial>
+            <origin xyz="0.024903 -0.0022634 -0.0013962" rpy="0 0 0"/>
+            <mass value="0.031605"/>
+            <inertia
+                    ixx="5.8492E-06"
+                    ixy="-8.8063E-07"
+                    ixz="1.4331E-07"
+                    iyy="2.667E-05"
+                    iyz="8.9675E-09"
+                    izz="2.4695E-05"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint3" parent="arm_link2" child="arm_link3" xyz="0 -0.0829 0" rpy="0 0 0"
+                    axisZ="-1" lower="-${pi/2}" upper="${pi/2}"/>
+    <xacro:common_link name="arm_link4" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.036246 0.0023413 -0.0019655" rpy="0 0 0"/>
+            <mass value="0.049766"/>
+            <inertia
+                    ixx="1.1857E-05"
+                    ixy="-6.5371E-06"
+                    ixz="-4.1044E-08"
+                    iyy="3.6323E-05"
+                    iyz="-1.2132E-07"
+                    izz="4.1769E-05"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint4" parent="arm_link3" child="arm_link4" xyz="0 -0.0829 0" rpy="0 0 0"
+                    axisZ="-1" lower="-${pi/2}" upper="${pi/2}"/>
+    <xacro:common_link name="arm_link5" material="White" path="X3plus">
+        <inertial>
+            <origin xyz="0.0023228 0.018169 0.028684" rpy="0 0 0"/>
+            <mass value="0.04069"/>
+            <inertia
+                    ixx="1.0627E-05"
+                    ixy="-3.0402E-07"
+                    ixz="-1.9524E-07"
+                    iyy="9.6306E-06"
+                    iyz="-1.3265E-06"
+                    izz="1.3298E-05"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint5" parent="arm_link4" child="arm_link5" xyz="-0.00215 -0.17455 0"
+                    rpy="${pi/2} 0 0" axisZ="1" lower="-${pi/2}" upper="${pi}"/>
+
+    <xacro:common_link name="rlink1" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.00653227489887718 0.000416767821288678 0.000980984132845697" rpy="0 0 0"/>
+            <mass value="0.00117883201961805"/>
+            <inertia
+                    ixx="3.30415008842026E-08"
+                    ixy="8.05114594599862E-09"
+                    ixz="-1.46441757999184E-10"
+                    iyy="1.67254031134004E-07"
+                    iyz="-9.31932225400159E-12"
+                    izz="1.99277285249309E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="grip_joint" parent="arm_link5" child="rlink1" xyz="-0.0035 -0.012625 -0.0685"
+                    rpy="0 -${pi/2} 0" axisZ="1" lower="-${pi/2}" upper="0"/>
+    <xacro:common_link name="rlink2" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.021158 0.0063295 -0.0030251" rpy="0 0 0"/>
+            <mass value="0.0024469"/>
+            <inertia
+                    ixx="5.188E-08"
+                    ixy="-1.2303E-07"
+                    ixz="-1.2978E-09"
+                    iyy="6.3204E-07"
+                    iyz="-3.8824E-10"
+                    izz="6.6364E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="rlink_joint2" parent="rlink1" child="rlink2" xyz="0.03 -0.00075429 0" rpy="0 0 0" mimic="-1"/>
+
+    <xacro:common_link name="rlink3" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.014355 1.1499E-05 -0.0033992" rpy="0 0 0"/>
+            <mass value="0.00087627"/>
+            <inertia
+                    ixx="2.0534E-08"
+                    ixy="-1.0235E-10"
+                    ixz="1.074E-09"
+                    iyy="1.4825E-07"
+                    iyz="8.7073E-13"
+                    izz="1.3089E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="rlink_joint3" parent="arm_link5" child="rlink3" xyz="-0.0035 -0.0045 -0.0505"
+                      rpy="0 -${pi/2} 0" mimic="1"/>
+    <xacro:common_link name="llink1" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.00628617364795481 -0.000318530407893543 0.00100000338924466" rpy="0 0 0"/>
+            <mass value="0.00121010771282268"/>
+            <inertia
+                    ixx="3.18226609060835E-08"
+                    ixy="-8.06236004452728E-09"
+                    ixz="3.99064856025629E-14"
+                    iyy="1.69267681405915E-07"
+                    iyz="1.87039773440675E-14"
+                    izz="2.00283878176223E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="llink_joint1" parent="arm_link5" child="llink1" xyz="-0.0035 0.012375 -0.0685"
+                      rpy="0 -${pi/2} 0" mimic="-1"/>
+    <xacro:common_link name="llink2" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.021159 -0.0063248 -0.0030251" rpy="0 0 0"/>
+            <mass value="0.0024469"/>
+            <inertia ixx="5.1826E-08" ixy="1.229E-07" ixz="-1.2979E-09" iyy="6.321E-07" iyz="3.8796E-10"
+                     izz="6.6364E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="llink_joint2" parent="llink1" child="llink2" xyz="0.03 0.00065104 0" rpy="0 0 0"
+                      mimic="1"/>
+    <xacro:common_link name="llink3" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.014354 -7.4795E-05 -0.0033992" rpy="0 0 0"/>
+            <mass value="0.00087627"/>
+            <inertia ixx="2.0537E-08" ixy="6.6549E-10" ixz="1.074E-09" iyy="1.4825E-07" iyz="-5.5867E-12"
+                     izz="1.3089E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="llink_joint3" parent="arm_link5" child="llink3" xyz="-0.0035 0.0045 -0.0505"
+                      rpy="0 -${pi/2} 0" mimic="-1"/>
+
+    <xacro:common_link name="mono_link" material="White" path="sensor">
+        <inertial>
+            <origin xyz="5.8458E-05 0.0095015 -0.0014824" rpy="0 0 0"/>
+            <mass value="0.0097589"/>
+            <inertia ixx="3.3488E-06" ixy="1.3667E-08" ixz="6.4235E-09" iyy="1.8662E-06" iyz="-1.0265E-07"
+                     izz="2.5696E-06"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:fixed_joint name="mono_joint" parent="arm_link4" child="mono_link" xyz="-0.0481 -0.05145 -0.0022"
+                 rpy="${pi/2} 0 0"/>
+
+
+
+   <xacro:common_mecanum_wheel_link name="front_right_wheel" material="White" fdir="1 1 0">
+            <inertial>
+                <origin xyz="1.9051E-06 -2.3183E-07 -0.00064079" rpy="0 0 0" />
+                <mass value="0.051532" />
+                <inertia ixx="1.4595E-05" ixy="-4.3975E-10" ixz="4.415E-10"
+                    iyy="1.4594E-05" iyz="-1.7476E-09" izz="2.4264E-05" />
+            </inertial>
+    
+        </xacro:common_mecanum_wheel_link>
+        <xacro:common_mecanum_wheel_link name="front_left_wheel" material="White" fdir="1 -1 0">
+            <inertial>
+                <origin xyz="2.3728E-06 -9.4228E-07 0.00064068" rpy="0 0 0" />
+                <mass value="0.051543" />
+                <inertia ixx="1.4597E-05" ixy="-4.7945E-10" ixz="-2.4786E-10"
+                    iyy="1.4598E-05" iyz="1.7972E-09" izz="2.4267E-05" />
+            </inertial>
+        </xacro:common_mecanum_wheel_link>
+        <xacro:common_mecanum_wheel_link name="back_right_wheel" material="White" fdir="1 -1 0">
+            <inertial>
+                <origin xyz="-1.75924169923403E-06 1.28388821071107E-06 -0.000590549296238266"
+                    rpy="0 0 0" />
+                <mass value="0.051540174053366" />
+                <inertia ixx="1.45974152250002E-05" ixy="1.94850559178397E-10"
+                    ixz="-1.61846387282284E-09"
+                    iyy="1.4596501955693E-05" iyz="-6.27904057423818E-10" izz="2.42663091380451E-05" />
+            </inertial>
+        </xacro:common_mecanum_wheel_link>
+        <xacro:common_mecanum_wheel_link name="back_left_wheel" material="White" fdir="1 1 0">
+            <inertial>
+                <origin xyz="-4.01213085227115E-07 2.04910264598596E-06 0.000590775697051377"
+                    rpy="0 0 0" />
+                <mass value="0.0515309299357028" />
+                <inertia ixx="1.45942986129926E-05" ixy="-3.19787215398093E-10"
+                    ixz="1.74943062058915E-09"
+                    iyy="1.45948727598913E-05" iyz="1.61769812110049E-10" izz="2.4263683888153E-05" />
+            </inertial>
+        </xacro:common_mecanum_wheel_link>
+
+
+    <xacro:wheel_continuous_joint name="front_right_joint" parent="base_link" child="front_right_wheel"
+        xyz="0.105  -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
+    <xacro:wheel_continuous_joint name="front_left_joint" parent="base_link" child="front_left_wheel"
+        xyz="0.105   0.103 -0.038" rpy="${pi/2} 0 0" axis="0 0 1" />
+    <xacro:wheel_continuous_joint name="back_right_joint" parent="base_link" child="back_right_wheel"
+        xyz="-0.115 -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
+    <xacro:wheel_continuous_joint name="back_left_joint" parent="base_link" child="back_left_wheel"
+        xyz="-0.115  0.103 -0.038" rpy="${pi/2} 0 0" axis="0 0 1" />
+
+
+</robot>

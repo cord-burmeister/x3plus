@@ -1,0 +1,759 @@
+<?xml version="1.0" encoding="utf-8"?>
+<robot name="yahboomcar_X3plus" xmlns:xacro="http://wiki.ros.org/xacro"
+    xmlns:gz="http://gazebosim.org/schema">
+
+    <!-- define the list of relevant args -->
+    <!-- <xacro:if value="${namespace == 'None'}">
+        <xacro:property name="ns" value="" />
+      </xacro:if>
+      <xacro:unless value="${namespace == 'None'}">
+          <xacro:property name="ns" value="${namespace}/" />
+      </xacro:unless> -->
+
+    <material name="Green">
+        <color rgba="0 0.7 0 1" />
+    </material>
+    <material name="White">
+        <color rgba="0.7 0.7 0.7 1" />
+    </material>
+    <xacro:property name="ns" value="$(arg ns)" />
+    <xacro:property name="wheel_radius" value="0.05" />
+
+    <link name="base_footprint" />
+
+    <link name="base_link">
+        <inertial>
+            <origin xyz="-0.0304416859098744 4.23384368655101E-05 0.0448234503408059" rpy="0 0 0" />
+            <mass value="1.0754239466482" />
+            <inertia
+                ixx="0.0208831789264125"
+                ixy="2.4618093127858E-06"
+                ixz="0.00616019290028669"
+                iyy="0.0265621377486244"
+                iyz="-1.10079499865282E-06"
+                izz="0.0129535610833954" />
+        </inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh
+                    filename="package://x3plus_description/meshes/X3plus/visual/base-link-small.STL" />
+            </geometry>
+            <material name="">
+                <color rgba="0 0.7 0 1" />
+            </material>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <mesh
+                    filename="package://x3plus_description/meshes/X3plus/collision/base-link-small.STL" />
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="base_joint" type="fixed">
+        <parent link="base_footprint" />
+        <child link="base_link" />
+        <origin xyz="0.0 0.0 0.076" rpy="0 0 0" />
+    </joint>
+
+    <!-- <link name="imu_link"/> -->
+    <!-- common link-->
+    <xacro:macro name="common_link" params="name material path *origin">
+        <link name="${name}">
+            <visual>
+                <geometry>
+                    <mesh filename="package://x3plus_description/meshes/${path}/visual/${name}.STL" />
+                </geometry>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <material name="${material}" />
+            </visual>
+            <collision>
+                <geometry>
+                    <mesh
+                        filename="package://x3plus_description/meshes/${path}/collision/${name}.STL" />
+                </geometry>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+            </collision>
+            <xacro:insert_block name="origin" />
+        </link>
+    </xacro:macro>
+    <!-- revolute joint-->
+    <xacro:macro name="revolute_joint" params="name parent child xyz rpy axisZ lower upper">
+        <joint name="${name}" type="revolute">
+            <parent link="${parent}" />
+            <child link="${child}" />
+            <origin xyz="${xyz}" rpy="${rpy}" />
+            <axis xyz="0 0 ${axisZ}" />
+            <limit lower="${lower}" upper="${upper}" effort="100" velocity="1" />
+        </joint>
+    </xacro:macro>
+
+    <!-- continuous joint-->
+    <xacro:macro name="continuous_joint" params="name parent child xyz rpy mimic">
+        <joint name="${name}" type="continuous">
+            <parent link="${parent}" />
+            <child link="${child}" />
+            <origin xyz="${xyz}" rpy="${rpy}" />
+            <axis xyz="0 0 1" />
+            <mimic joint="grip_joint" multiplier="${mimic}" />
+        </joint>
+    </xacro:macro>
+
+    <!-- fixed joint-->
+    <xacro:macro name="fixed_joint" params="name parent child xyz rpy">
+        <joint name="${name}" type="fixed">
+            <parent link="${parent}" />
+            <child link="${child}" />
+            <origin xyz="${xyz}" rpy="${rpy}" />
+        </joint>
+    </xacro:macro>
+
+    <!-- common mecanum wheel link-->
+    <xacro:macro name="common_mecanum_wheel_link" params="name material fdir *origin">
+        <link name="${name}">
+            <visual>
+                <geometry>
+                    <mesh filename="package://x3plus_description/meshes/X3plus/visual/${name}.STL" />
+                </geometry>
+                <origin xyz="0 0 0" rpy="0 0 0" />
+                <material name="${material}" />
+            </visual>
+
+            <collision>
+                <pose>0 0 0 0 0 0</pose>
+                <geometry>
+                    <sphere radius="0.032391999999999997" />
+                </geometry>
+            </collision>
+            <xacro:insert_block name="origin" />
+        </link>
+
+        <gazebo reference="${name}">
+            <collision>
+                <surface>
+                    <contact>
+                        <ode />
+                    </contact>
+                    <friction>
+                        <ode>
+                            <mu>1.0</mu>
+                            <mu2>0.0</mu2>
+                            <fdir1 gz:expressed_in="base_footprint">${fdir}</fdir1>
+                        </ode>
+                    </friction>
+                </surface>
+            </collision>
+            <!-- <mu1>1</mu1>
+            <mu2>0</mu2>
+            <fdir1 gz:expressed_in='base_footprint'>${fdir}</fdir1> -->
+        </gazebo>
+
+    </xacro:macro>
+
+    <!-- continuous joint-->
+    <xacro:macro name="wheel_continuous_joint" params="name parent child xyz rpy axis">
+        <joint name="${name}" type="continuous">
+            <parent link="${parent}" />
+            <child link="${child}" />
+            <origin xyz="${xyz}" rpy="${rpy}" />
+            <axis xyz="${axis}" />
+            <limit lower="${-pi}" upper="${pi}" effort="100" velocity="5" />
+        </joint>
+    </xacro:macro>
+
+    <!-- <common_link name="base_link" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="-0.0304416859098744 4.23384368655101E-05 0.0448234503408059" rpy="0 0 0"/>
+            <mass value="1.0754239466482"/>
+            <inertia
+                    ixx="0.0208831789264125"
+                    ixy="2.4618093127858E-06"
+                    ixz="0.00616019290028669"
+                    iyy="0.0265621377486244"
+                    iyz="-1.10079499865282E-06"
+                    izz="0.0129535610833954"/>
+        </inertial>
+    </common_link>
+    <fixed_joint name="base_joint" parent="base_footprint" child="base_link" xyz="0.0 0.0 0.076" rpy="0
+    0 0"/> -->
+    <!-- <fixed_joint name="base_imu" parent="base_link" child="imu_link" xyz="0.001 0.017 0.0322"
+    rpy="0 3.1415 1.5707"/> -->
+
+    <xacro:common_link name="laser_link" material="White" path="sensor">
+        <inertial>
+            <origin xyz="-0.0176558922685589 0.000671805271544437 0.0219302095894866" rpy="0 0 0" />
+            <mass value="0.0483909504209895" />
+            <inertia ixx="1.58456966399128E-05" ixy="-4.23913983850005E-07"
+                ixz="-2.09597897904374E-07"
+                iyy="3.89262522903605E-05" iyz="3.24809725932687E-07" izz="4.86230801106223E-05" />
+        </inertial>
+    </xacro:common_link>
+    <xacro:fixed_joint name="laser_joint" parent="base_link" child="laser_link"
+        xyz="0.10478 0 0.0471" rpy="0 0 0" />
+
+    <xacro:common_link name="camera_link" material="White" path="sensor">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <mass value="0" />
+            <inertia ixx="0" ixy="0" ixz="0" iyy="0" iyz="0" izz="0" />
+        </inertial>
+    </xacro:common_link>
+
+
+    <xacro:common_link name="arm_link1" material="White" path="X3plus">
+        <inertial>
+            <origin xyz="1.99179507982521E-05 -5.98354652829568E-05 0.0114289358828097" rpy="0 0 0" />
+            <mass value="0.0279545499871709" />
+            <inertia
+                ixx="1.19144359314975E-05"
+                ixy="-9.26068510046816E-09"
+                ixz="3.16060516198683E-09"
+                iyy="1.05642517915377E-05"
+                iyz="2.69674403668579E-08"
+                izz="1.49639510661413E-05" />
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint1" parent="base_link" child="arm_link1"
+        xyz="0.09825 0 0.102" rpy="0 0 0" axisZ="-1"
+        lower="-${pi/2}" upper="${pi/2}" />
+
+    <xacro:common_link name="arm_link2b" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.024903 -0.0022632 -0.00066663" rpy="0 0 0" />
+            <mass value="0.031605" />
+            <inertia
+                ixx="5.8495E-06"
+                ixy="-8.8092E-07"
+                ixz="1.5336E-07"
+                iyy="2.667E-05"
+                iyz="7.1365E-09"
+                izz="2.4695E-05" />
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint2" parent="arm_link1" child="arm_link2b" xyz="0 0 0.0405"
+        rpy="-${pi/2} 0 0" axisZ="-1" lower="-${pi/2}" upper="${pi/2}" />
+
+    <xacro:fixed_joint name="camera_joint" parent="arm_link2b" child="camera_link" xyz="0 -0.07 0"
+        rpy="${pi/2} 0 0" />
+
+    <!-- <xacro:fixed_joint name="camera_joint" parent="base_link" child="camera_link"
+        xyz="0.057105 1.7948E-05 0.03755" rpy="0 0 0" /> -->
+
+   <joint name="camera_optical_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}" />
+            <parent link="camera_link" />
+            <child link="camera_link_optical" />
+        </joint>
+        
+        <link name="camera_link_optical"></link>
+
+
+    <!-- <xacro:common_link name="arm_link3" material="White" path="X3plus">
+        <inertial>
+            <origin xyz="0.024903 -0.0022634 -0.0013962" rpy="0 0 0"/>
+            <mass value="0.031605"/>
+            <inertia
+                    ixx="5.8492E-06"
+                    ixy="-8.8063E-07"
+                    ixz="1.4331E-07"
+                    iyy="2.667E-05"
+                    iyz="8.9675E-09"
+                    izz="2.4695E-05"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint3" parent="arm_link2" child="arm_link3" xyz="0 -0.0829 0"
+    rpy="0 0 0"
+                    axisZ="-1" lower="-${pi/2}" upper="${pi/2}"/>
+    <xacro:common_link name="arm_link4" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.036246 0.0023413 -0.0019655" rpy="0 0 0"/>
+            <mass value="0.049766"/>
+            <inertia
+                    ixx="1.1857E-05"
+                    ixy="-6.5371E-06"
+                    ixz="-4.1044E-08"
+                    iyy="3.6323E-05"
+                    iyz="-1.2132E-07"
+                    izz="4.1769E-05"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint4" parent="arm_link3" child="arm_link4" xyz="0 -0.0829 0"
+    rpy="0 0 0"
+                    axisZ="-1" lower="-${pi/2}" upper="${pi/2}"/>
+
+    <xacro:common_link name="arm_link5" material="White" path="X3plus">
+        <inertial>
+            <origin xyz="0.0023228 0.018169 0.028684" rpy="0 0 0"/>
+            <mass value="0.04069"/>
+            <inertia
+                    ixx="1.0627E-05"
+                    ixy="-3.0402E-07"
+                    ixz="-1.9524E-07"
+                    iyy="9.6306E-06"
+                    iyz="-1.3265E-06"
+                    izz="1.3298E-05"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="arm_joint5" parent="arm_link4" child="arm_link5" xyz="-0.00215 -0.17455
+    0"
+                    rpy="${pi/2} 0 0" axisZ="1" lower="-${pi/2}" upper="${pi}"/>
+
+    <xacro:common_link name="rlink1" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.00653227489887718 0.000416767821288678 0.000980984132845697" rpy="0 0 0"/>
+            <mass value="0.00117883201961805"/>
+            <inertia
+                    ixx="3.30415008842026E-08"
+                    ixy="8.05114594599862E-09"
+                    ixz="-1.46441757999184E-10"
+                    iyy="1.67254031134004E-07"
+                    iyz="-9.31932225400159E-12"
+                    izz="1.99277285249309E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:revolute_joint name="grip_joint" parent="arm_link5" child="rlink1" xyz="-0.0035 -0.012625
+    -0.0685"
+                    rpy="0 -${pi/2} 0" axisZ="1" lower="-${pi/2}" upper="0"/>
+
+    <xacro:common_link name="rlink2" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.021158 0.0063295 -0.0030251" rpy="0 0 0"/>
+            <mass value="0.0024469"/>
+            <inertia
+                    ixx="5.188E-08"
+                    ixy="-1.2303E-07"
+                    ixz="-1.2978E-09"
+                    iyy="6.3204E-07"
+                    iyz="-3.8824E-10"
+                    izz="6.6364E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="rlink_joint2" parent="rlink1" child="rlink2" xyz="0.03 -0.00075429 0"
+    rpy="0 0 0" mimic="-1"/>
+
+    <xacro:common_link name="rlink3" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.014355 1.1499E-05 -0.0033992" rpy="0 0 0"/>
+            <mass value="0.00087627"/>
+            <inertia
+                    ixx="2.0534E-08"
+                    ixy="-1.0235E-10"
+                    ixz="1.074E-09"
+                    iyy="1.4825E-07"
+                    iyz="8.7073E-13"
+                    izz="1.3089E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="rlink_joint3" parent="arm_link5" child="rlink3" xyz="-0.0035 -0.0045
+    -0.0505"
+                      rpy="0 -${pi/2} 0" mimic="1"/>
+
+    <xacro:common_link name="llink1" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.00628617364795481 -0.000318530407893543 0.00100000338924466" rpy="0 0 0"/>
+            <mass value="0.00121010771282268"/>
+            <inertia
+                    ixx="3.18226609060835E-08"
+                    ixy="-8.06236004452728E-09"
+                    ixz="3.99064856025629E-14"
+                    iyy="1.69267681405915E-07"
+                    iyz="1.87039773440675E-14"
+                    izz="2.00283878176223E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="llink_joint1" parent="arm_link5" child="llink1" xyz="-0.0035 0.012375
+    -0.0685"
+                      rpy="0 -${pi/2} 0" mimic="-1"/>
+    <xacro:common_link name="llink2" material="Green" path="X3plus"> 
+        <inertial>
+            <origin xyz="0.021159 -0.0063248 -0.0030251" rpy="0 0 0"/>
+            <mass value="0.0024469"/>
+            <inertia ixx="5.1826E-08" ixy="1.229E-07" ixz="-1.2979E-09" iyy="6.321E-07" iyz="3.8796E-10"
+                     izz="6.6364E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="llink_joint2" parent="llink1" child="llink2" xyz="0.03 0.00065104 0"
+    rpy="0 0 0"
+                      mimic="1"/>
+
+    <xacro:common_link name="llink3" material="Green" path="X3plus">
+        <inertial>
+            <origin xyz="0.014354 -7.4795E-05 -0.0033992" rpy="0 0 0"/>
+            <mass value="0.00087627"/>
+            <inertia ixx="2.0537E-08" ixy="6.6549E-10" ixz="1.074E-09" iyy="1.4825E-07" iyz="-5.5867E-12"
+                     izz="1.3089E-07"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:continuous_joint name="llink_joint3" parent="arm_link5" child="llink3" xyz="-0.0035 0.0045
+    -0.0505"
+                      rpy="0 -${pi/2} 0" mimic="-1"/>
+
+    <xacro:common_link name="mono_link" material="White" path="sensor">
+        <inertial>
+            <origin xyz="5.8458E-05 0.0095015 -0.0014824" rpy="0 0 0"/>
+            <mass value="0.0097589"/>
+            <inertia ixx="3.3488E-06" ixy="1.3667E-08" ixz="6.4235E-09" iyy="1.8662E-06" iyz="-1.0265E-07"
+                     izz="2.5696E-06"/>
+        </inertial>
+    </xacro:common_link>
+    <xacro:fixed_joint name="mono_joint" parent="arm_link4" child="mono_link" xyz="-0.0481 -0.05145
+    -0.0022"
+                 rpy="${pi/2} 0 0"/> 
+                 
+                 -->
+
+
+    <xacro:common_mecanum_wheel_link name="front_right_wheel" material="White" fdir="1 1 0">
+        <inertial>
+            <origin xyz="1.9051E-06 -2.3183E-07 -0.00064079" rpy="0 0 0" />
+            <mass value="0.051532" />
+            <inertia ixx="1.4595E-05" ixy="-4.3975E-10" ixz="4.415E-10"
+                iyy="1.4594E-05" iyz="-1.7476E-09" izz="2.4264E-05" />
+        </inertial>
+
+    </xacro:common_mecanum_wheel_link>
+    <xacro:common_mecanum_wheel_link name="front_left_wheel" material="White" fdir="1 -1 0">
+        <inertial>
+            <origin xyz="2.3728E-06 -9.4228E-07 0.00064068" rpy="0 0 0" />
+            <mass value="0.051543" />
+            <inertia ixx="1.4597E-05" ixy="-4.7945E-10" ixz="-2.4786E-10"
+                iyy="1.4598E-05" iyz="1.7972E-09" izz="2.4267E-05" />
+        </inertial>
+    </xacro:common_mecanum_wheel_link>
+    <xacro:common_mecanum_wheel_link name="back_right_wheel" material="White" fdir="1 -1 0">
+        <inertial>
+            <origin xyz="-1.75924169923403E-06 1.28388821071107E-06 -0.000590549296238266"
+                rpy="0 0 0" />
+            <mass value="0.051540174053366" />
+            <inertia ixx="1.45974152250002E-05" ixy="1.94850559178397E-10"
+                ixz="-1.61846387282284E-09"
+                iyy="1.4596501955693E-05" iyz="-6.27904057423818E-10" izz="2.42663091380451E-05" />
+        </inertial>
+    </xacro:common_mecanum_wheel_link>
+    <xacro:common_mecanum_wheel_link name="back_left_wheel" material="White" fdir="1 1 0">
+        <inertial>
+            <origin xyz="-4.01213085227115E-07 2.04910264598596E-06 0.000590775697051377"
+                rpy="0 0 0" />
+            <mass value="0.0515309299357028" />
+            <inertia ixx="1.45942986129926E-05" ixy="-3.19787215398093E-10"
+                ixz="1.74943062058915E-09"
+                iyy="1.45948727598913E-05" iyz="1.61769812110049E-10" izz="2.4263683888153E-05" />
+        </inertial>
+    </xacro:common_mecanum_wheel_link>
+
+
+    <xacro:wheel_continuous_joint name="front_right_joint" parent="base_link"
+        child="front_right_wheel"
+        xyz="0.105  -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
+    <xacro:wheel_continuous_joint name="front_left_joint" parent="base_link"
+        child="front_left_wheel"
+        xyz="0.105   0.103 -0.038" rpy="${pi/2} 0 0" axis="0 0 1" />
+    <xacro:wheel_continuous_joint name="back_right_joint" parent="base_link"
+        child="back_right_wheel"
+        xyz="-0.115 -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
+    <xacro:wheel_continuous_joint name="back_left_joint" parent="base_link" child="back_left_wheel"
+        xyz="-0.115  0.103 -0.038" rpy="${pi/2} 0 0" axis="0 0 1" />
+
+
+   <gazebo>
+            <plugin name='gz::sim::systems::MecanumDrive' filename='gz-sim-mecanum-drive-system'>
+                <front_left_joint>front_left_joint</front_left_joint>
+                <front_right_joint>front_right_joint</front_right_joint>
+                <back_left_joint>back_left_joint</back_left_joint>
+                <back_right_joint>back_right_joint</back_right_joint>
+                <!-- Lateral distance between left and right wheels -->
+                <wheel_separation>0.169</wheel_separation>
+                <!-- Longitudinal distance between front and back wheels -->
+                <wheelbase>0.16</wheelbase>
+                <!-- Wheel radius -->
+                <wheel_radius>-0.042</wheel_radius>
+                <!-- <min_acceleration>-5</min_acceleration>
+                <max_acceleration>5</max_acceleration> -->
+
+                <max_velocity>3.0</max_velocity>
+                <min_velocity>-3.0</min_velocity>
+                <!-- <min_jerk>3</min_jerk>
+                <max_jerk>-3</max_jerk> -->
+
+                <odom_publish_frequency>10</odom_publish_frequency>
+                <odom_topic>/odometry</odom_topic>
+                <publish_odom_tf>false</publish_odom_tf>
+                <publish_wheel_tf>true</publish_wheel_tf>                
+                <topic>/cmd_vel</topic>
+                <tf_topic>/pose</tf_topic>
+    
+            </plugin>
+        </gazebo>
+
+
+    <gazebo>
+        <!-- 
+            The JointStatePublisher system publishes joint state information for a model. The published message type is gz::msgs::Model, and the publication topic is determined by the <topic> parameter.
+            By default the JointStatePublisher will publish all joints for a model. Use the <joint_name> system parameter, described below, to control which joints are published.
+
+            <topic>: Name of the topic to publish to. This parameter is optional, and if not provided, the joint state will be published to "/world/<world_name>/model/<model_name>/joint_state".
+            <joint_name>: Name of a joint to publish. This parameter can be specified multiple times, and is optional. All joints in a model will be published if joint names are not specified. 
+         -->
+      <plugin
+        filename="gz-sim-joint-state-publisher-system"
+        name="gz::sim::systems::JointStatePublisher">
+      </plugin>
+
+      <!-- 
+        Pose publisher system. Attach to an entity to publish the transform of its child entities in the form of gz::msgs::Pose messages, or a single gz::msgs::Pose_V message if "use_pose_vector_msg" is true.
+        <publish_link_pose>: Set to true to publish link pose
+        <publish_visual_pose>: Set to true to publish visual pose
+        <publish_collision_pose>: Set to true to publish collision pose
+        <publish_sensor_pose>: Set to true to publish sensor pose
+        <publish_model_pose>: Set to true to publish model pose.
+        <publish_nested_model_pose>: Set to true to publish nested model pose. The pose of the model that contains this system is also published unless publish_model_pose is set to false
+        <use_pose_vector_msg>: Set to true to publish a gz::msgs::Pose_V message instead of mulitple gz::msgs::Pose messages.
+        <update_frequency>: Frequency of pose publications in Hz. A negative frequency publishes as fast as possible (i.e, at the rate of the simulation step)
+        <static_publisher>: Set to true to publish static poses on a "<scoped_entity_name>/pose_static" topic. This will cause only dynamic poses to be published on the "<scoped_entity_name>/pose" topic.
+        <static_update_frequency>: Frequency of static pose publications in Hz. A negative frequency publishes as fast as possible (i.e, at the rate of the simulation step). 
+        -->
+
+      <!-- <plugin
+        filename="gz-sim-pose-publisher-system"
+        name="gz::sim::systems::PosePublisher">
+        <publish_link_pose>true</publish_link_pose>
+        <use_pose_vector_msg>true</use_pose_vector_msg>
+        <static_publisher>true</static_publisher>
+        <static_update_frequency>1</static_update_frequency>
+      </plugin> -->
+
+    <!-- ## IMU sensor
+        This system manages all IMU sensors in simulation. Each IMU sensor reports vertical position, angular velocity and linear acceleration readings over Gazebo Transport.
+        https://gazebosim.org/docs/harmonic/sensors
+        The inertial measurement unit (IMU) outputs the `orientation` of our
+        robot in quaternions, the `angular_velocity` in the three axes (X, Y, Z),
+        and the `linear_acceleration` in the three axes. Let's use our
+        [moving_robot.sdf](https://github.com/gazebosim/docs/blob/master/harmonic/tutorials/moving_robot/moving_robot.sdf) world and modify it. Create a new file
+        `sensor_tutorial.sdf` and add the code from `moving_robot.sdf` to it.
+        To define the `IMU` sensor add this code under the `<world>` tag: 
+    -->
+    <!-- <plugin filename="gz-sim-imu-system"
+        name="gz::sim::systems::Imu">
+    </plugin> -->
+
+<!-- 
+    Odometry Publisher which can be attached to any entity in order to periodically publish 2D or 3D odometry data in the form of gz::msgs::Odometry messages.
+
+    System Parameters
+    <odom_frame>: Name of the world-fixed coordinate frame for the is {name_of_model}/odom.
+    <robot_base_frame>: Name of the coordinate frame rigidly attached to the mobile robot base. This element is optional, and the default value is {name_of_model}/base_footprint.
+    <odom_publish_frequency>: Odometry publication frequency. This element is optional, and the default value is 50Hz.
+    <odom_topic>: Custom topic on which this system will publish odometry messages. This element is optional, and the default value is /model/{name_of_model}/odometry.
+    <odom_covariance_topic>: Custom topic on which this system will publish odometry with covariance messages. This element is optional, and the default value is /model/{name_of_model}/odometry_with_covariance.
+    <tf_topic>: Custom topic on which this system will publish the transform from odom_frame to robot_base_frame. This element is optional, and the default value is /model/{name_of_model}/pose.
+    <dimensions>: Number of dimensions to represent odometry. Only 2 and 3 dimensional spaces are supported. This element is optional, and the default value is 2.
+    <xyz_offset>: Position offset relative to the body fixed frame, the default value is 0 0 0. This offset will be added to the odometry message.
+    <rpy_offset>: Rotation offset relative to the body fixed frame, the default value is 0 0 0. This offset will be added to the odometry message.
+    <gaussian_noise>: Standard deviation of the Gaussian noise to be added to pose and twist messages. This element is optional, and the default value is 0.
+
+ -->
+      <plugin
+        filename="gz-sim-odometry-publisher-system"
+        name="gz::sim::systems::OdometryPublisher">
+        <odom_frame>odom</odom_frame>
+        <robot_base_frame>base_footprint</robot_base_frame>
+      </plugin>
+    </gazebo>
+
+    <gazebo reference="base_link">
+        <sensor name="imu_sensor" type="imu">
+            <always_on>1</always_on>
+            <update_rate>1</update_rate>
+            <visualize>true</visualize>
+            <topic>imu</topic>
+            <gz_frame_id>base_link</gz_frame_id>
+            <imu>
+                <angular_velocity>
+                  <x>
+                    <noise type="gaussian">
+                      <mean>0.0</mean>
+                      <stddev>2e-4</stddev>
+                      <bias_mean>0.0000075</bias_mean>
+                      <bias_stddev>0.0000008</bias_stddev>
+                    </noise>
+                  </x>
+                  <y>
+                    <noise type="gaussian">
+                      <mean>0.0</mean>
+                      <stddev>2e-4</stddev>
+                      <bias_mean>0.0000075</bias_mean>
+                      <bias_stddev>0.0000008</bias_stddev>
+                    </noise>
+                  </y>
+                  <z>
+                    <noise type="gaussian">
+                      <mean>0.0</mean>
+                      <stddev>2e-4</stddev>
+                      <bias_mean>0.0000075</bias_mean>
+                      <bias_stddev>0.0000008</bias_stddev>
+                    </noise>
+                  </z>
+                </angular_velocity>
+                <linear_acceleration>
+                  <x>
+                    <noise type="gaussian">
+                      <mean>0.0</mean>
+                      <stddev>1.7e-2</stddev>
+                      <bias_mean>0.1</bias_mean>
+                      <bias_stddev>0.001</bias_stddev>
+                    </noise>
+                  </x>
+                  <y>
+                    <noise type="gaussian">
+                      <mean>0.0</mean>
+                      <stddev>1.7e-2</stddev>
+                      <bias_mean>0.1</bias_mean>
+                      <bias_stddev>0.001</bias_stddev>
+                    </noise>
+                  </y>
+                  <z>
+                    <noise type="gaussian">
+                      <mean>0.0</mean>
+                      <stddev>1.7e-2</stddev>
+                      <bias_mean>0.1</bias_mean>
+                      <bias_stddev>0.001</bias_stddev>
+                    </noise>
+                  </z>
+                </linear_acceleration>
+              </imu>
+        </sensor>
+    </gazebo>
+
+    <gazebo reference="laser_link">
+        <sensor name='gpu_lidar' type='gpu_lidar'> 
+        <pose relative_to='laser_link'>0 0 0 0 0 0</pose>
+        <topic>lidar</topic>
+        <update_rate>10</update_rate>
+        <gz_frame_id>laser_link</gz_frame_id>
+        <ray>
+                <scan>
+                    <horizontal>
+                        <samples>640</samples>
+                        <resolution>1</resolution>
+                        <min_angle>-1.396263</min_angle>
+                        <max_angle>1.396263</max_angle>
+                    </horizontal>
+                    <vertical>
+                        <samples>1</samples>
+                        <resolution>0.01</resolution>
+                        <min_angle>0</min_angle>
+                        <max_angle>0</max_angle>
+                    </vertical>
+                </scan>
+                <range>
+                    <min>0.08</min>
+                    <max>10.0</max>
+                    <resolution>0.01</resolution>
+                </range>
+            </ray>
+        <always_on>1</always_on>
+        <visualize>true</visualize>
+        </sensor>
+    </gazebo>
+
+    <gazebo reference="camera_link">
+        <!-- https://github.com/orbbec/OrbbecSDK_ROS2#all-available-topics -->
+        <sensor type="camera" name="camera_orbbec_astra_color">
+            <always_on>true</always_on>
+            <update_rate>10.0</update_rate>
+
+            <topic>/color/image_raw</topic>
+            <visualize>true</visualize>
+
+            <gz_frame_id>camera_link</gz_frame_id>
+            <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
+            <image>
+                <width>640</width>
+                <height>480</height>
+            </image>
+
+            <clip>
+                <near>0.6</near>
+                <far>8.0</far>
+            </clip>
+        </sensor>
+
+        <sensor type="depth_camera" name="camera__orbbec_astra_depth">
+            <always_on>true</always_on>
+            <update_rate>10.0</update_rate>
+            <topic>/depth/image_raw</topic>
+            <visualize>true</visualize>
+            <gz_frame_id>camera_link</gz_frame_id>
+            <!-- <gz_frame_id>camera_link_optical</gz_frame_id> -->
+            <camera>
+                <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
+                <image>
+                    <width>640</width>
+                    <height>480</height>
+                </image>
+
+                <clip>
+                    <near>0.6</near>
+                    <far>8.0</far>
+                </clip>
+                <!-- <noise>
+                    <type>gaussian</type>
+                    <mean>0.0</mean>
+                    <stddev>0.005</stddev>
+                </noise> -->
+            </camera>
+        </sensor>
+
+        <sensor type="camera" name="camera_opt_orbbec_astra_color">
+            <always_on>true</always_on>
+            <update_rate>10.0</update_rate>
+
+            <topic>/color/opt/image_raw</topic>
+            <visualize>true</visualize>
+
+            <!-- <gz_frame_id>camera_link</gz_frame_id> -->
+            <gz_frame_id>camera_link_optical</gz_frame_id>
+            <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
+            <image>
+                <width>640</width>
+                <height>480</height>
+            </image>
+
+            <clip>
+                <near>0.6</near>
+                <far>8.0</far>
+            </clip>
+        </sensor>
+
+
+        <sensor type="depth_camera" name="camera_opt_orbbec_astra_depth">
+            <always_on>true</always_on>
+            <update_rate>10.0</update_rate>
+            <topic>/depth/opt/image_raw</topic>
+            <visualize>true</visualize>
+            <!-- <gz_frame_id>camera_link</gz_frame_id> -->
+            <gz_frame_id>camera_link_optical</gz_frame_id>
+            <camera>
+                <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
+                <image>
+                    <width>640</width>
+                    <height>480</height>
+                </image>
+
+                <clip>
+                    <near>0.6</near>
+                    <far>8.0</far>
+                </clip>
+                <!-- <noise>
+                    <type>gaussian</type>
+                    <mean>0.0</mean>
+                    <stddev>0.005</stddev>
+                </noise> -->
+            </camera>
+        </sensor>
+
+    </gazebo>
+
+</robot>
