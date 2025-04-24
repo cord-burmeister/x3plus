@@ -190,6 +190,7 @@
                 iyy="3.89262522903605E-05" iyz="3.24809725932687E-07" izz="4.86230801106223E-05" />
         </inertial>
     </xacro:common_link>
+    
     <xacro:fixed_joint name="laser_joint" parent="base_link" child="laser_link"
         xyz="0.10478 0 0.0471" rpy="0 0 0" />
 
@@ -568,7 +569,7 @@
             <update_rate>1</update_rate>
             <visualize>true</visualize>
             <topic>imu</topic>
-            <gz_frame_id>base_link</gz_frame_id>
+            <!-- <gz_frame_id>base_link</gz_frame_id> -->
             <imu>
                 <angular_velocity>
                   <x>
@@ -631,7 +632,7 @@
         <pose relative_to='laser_link'>0 0 0 0 0 0</pose>
         <topic>lidar</topic>
         <update_rate>10</update_rate>
-        <gz_frame_id>laser_link</gz_frame_id>
+        <!-- <gz_frame_id>laser_link</gz_frame_id> -->
         <ray>
                 <scan>
                     <horizontal>
@@ -667,7 +668,7 @@
             <topic>/color/image_raw</topic>
             <visualize>true</visualize>
 
-            <gz_frame_id>camera_link</gz_frame_id>
+            <!-- <gz_frame_id>camera_link</gz_frame_id> -->
             <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
             <image>
                 <width>640</width>
@@ -685,7 +686,7 @@
             <update_rate>10.0</update_rate>
             <topic>/depth/image_raw</topic>
             <visualize>true</visualize>
-            <gz_frame_id>camera_link</gz_frame_id>
+            <!-- <gz_frame_id>camera_link</gz_frame_id> -->
             <!-- <gz_frame_id>camera_link_optical</gz_frame_id> -->
             <camera>
                 <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
@@ -714,7 +715,7 @@
             <visualize>true</visualize>
 
             <!-- <gz_frame_id>camera_link</gz_frame_id> -->
-            <gz_frame_id>camera_link_optical</gz_frame_id>
+            <!-- <gz_frame_id>camera_link_optical</gz_frame_id> -->
             <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
             <image>
                 <width>640</width>
@@ -734,7 +735,7 @@
             <topic>/depth/opt/image_raw</topic>
             <visualize>true</visualize>
             <!-- <gz_frame_id>camera_link</gz_frame_id> -->
-            <gz_frame_id>camera_link_optical</gz_frame_id>
+            <!-- <gz_frame_id>camera_link_optical</gz_frame_id> -->
             <camera>
                 <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
                 <image>
