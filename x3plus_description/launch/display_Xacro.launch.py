@@ -39,11 +39,9 @@ def evaluate_xacro(context, *args, **kwargs):
     #robot_description_config = xacro.process_file(xacro_file)
     robot_description_config = xacro.process_file(xacro_file, 
             mappings={  
-                "mecanum": mecanum,
-                "ns" : namespace
+                # "mecanum": mecanum,
+                # "ns" : namespace
                 }).toxml()
-
- 
 
     robot_state_publisher_node = Node(
       package='robot_state_publisher',
@@ -60,7 +58,7 @@ def evaluate_xacro(context, *args, **kwargs):
 def generate_launch_description():
     description_path = get_package_share_path('x3plus_description')
     default_rviz_config_path = description_path / 'config/x3plus_description.rviz'
-   
+
     namespace = LaunchConfiguration("namespace")
     declare_namespace_arg = DeclareLaunchArgument(
         "namespace",
@@ -112,6 +110,6 @@ def generate_launch_description():
         joint_state_publisher_node,
         joint_state_publisher_gui_node,
         #robot_state_publisher_node,
-        OpaqueFunction(function=evaluate_xacro),        
+        OpaqueFunction(function=evaluate_xacro),
         rviz_node
     ])
