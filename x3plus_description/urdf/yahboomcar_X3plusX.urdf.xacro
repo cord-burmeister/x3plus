@@ -466,7 +466,6 @@
         </inertial>
     </xacro:common_mecanum_wheel_link>
 
-
     <xacro:wheel_continuous_joint name="front_right_joint" parent="base_link"
         child="front_right_wheel"
         xyz="0.105  -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
@@ -654,33 +653,33 @@
 
     <gazebo reference="laser_link">
         <sensor name='gpu_lidar' type='gpu_lidar'> 
-        <pose relative_to='laser_link'>0 0 0 0 0 0</pose>
-        <topic>lidar</topic>
-        <update_rate>10</update_rate>
-        <frame_id >laser_link</frame_id >
-        <ray>
-                <scan>
-                    <horizontal>
-                        <samples>640</samples>
-                        <resolution>1</resolution>
-                        <min_angle>-1.396263</min_angle>
-                        <max_angle>1.396263</max_angle>
-                    </horizontal>
-                    <vertical>
-                        <samples>1</samples>
+            <pose relative_to='laser_link'>0 0 0 0 0 0</pose>
+            <topic>/lidar</topic>
+            <update_rate>10</update_rate>
+            <frame_id >laser_link</frame_id >
+            <ray>
+                    <scan>
+                        <horizontal>
+                            <samples>640</samples>
+                            <resolution>1</resolution>
+                            <min_angle>-1.396263</min_angle>
+                            <max_angle>1.396263</max_angle>
+                        </horizontal>
+                        <vertical>
+                            <samples>1</samples>
+                            <resolution>0.01</resolution>
+                            <min_angle>0</min_angle>
+                            <max_angle>0</max_angle>
+                        </vertical>
+                    </scan>
+                    <range>
+                        <min>0.08</min>
+                        <max>10.0</max>
                         <resolution>0.01</resolution>
-                        <min_angle>0</min_angle>
-                        <max_angle>0</max_angle>
-                    </vertical>
-                </scan>
-                <range>
-                    <min>0.08</min>
-                    <max>10.0</max>
-                    <resolution>0.01</resolution>
-                </range>
-            </ray>
-        <always_on>1</always_on>
-        <visualize>true</visualize>
+                    </range>
+                </ray>
+            <always_on>1</always_on>
+            <visualize>true</visualize>
         </sensor>
     </gazebo>
 
@@ -706,13 +705,13 @@
             </clip>
         </sensor>
 
-        <sensor type="depth_camera" name="camera__orbbec_astra_depth">
+        <sensor type="depth_camera" name="camera_orbbec_astra_depth">
             <always_on>true</always_on>
             <update_rate>10.0</update_rate>
             <topic>/depth/image_raw</topic>
             <visualize>true</visualize>
-            <!-- <frame_id >camera_link</frame_id > -->
-            <frame_id >camera_link_optical</frame_id >
+            <frame_id >camera_link</frame_id >
+            <!-- <frame_id >camera_link_optical</frame_id > -->
             <camera>
                 <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
                 <image>
@@ -739,8 +738,8 @@
             <topic>/color/opt/image_raw</topic>
             <visualize>true</visualize>
 
-            <!-- <frame_id >camera_link</frame_id > -->
-            <frame_id >camera_link_optical</frame_id >
+            <frame_id >camera_link</frame_id >
+            <!-- <frame_id >camera_link_optical</frame_id > -->
             <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
             <image>
                 <width>640</width>
@@ -759,8 +758,8 @@
             <update_rate>10.0</update_rate>
             <topic>/depth/opt/image_raw</topic>
             <visualize>true</visualize>
-            <!-- <frame_id >camera_link</frame_id > -->
-            <frame_id >camera_link_optical</frame_id >
+            <frame_id >camera_link</frame_id >
+            <!-- <frame_id >camera_link_optical</frame_id > -->
             <camera>
                 <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
                 <image>

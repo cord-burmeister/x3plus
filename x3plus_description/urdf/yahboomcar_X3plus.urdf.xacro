@@ -405,14 +405,19 @@
         </xacro:common_mecanum_wheel_link>
 
 
-    <xacro:wheel_continuous_joint name="front_right_joint" parent="base_link" child="front_right_wheel"
+        <xacro:wheel_continuous_joint name="front_right_joint" parent="base_link"
+        child="front_right_wheel"
         xyz="0.105  -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
-    <xacro:wheel_continuous_joint name="front_left_joint" parent="base_link" child="front_left_wheel"
-        xyz="0.105   0.103 -0.038" rpy="${pi/2} 0 0" axis="0 0 1" />
-    <xacro:wheel_continuous_joint name="back_right_joint" parent="base_link" child="back_right_wheel"
+    <xacro:wheel_continuous_joint name="front_left_joint" parent="base_link"
+        child="front_left_wheel"
+        xyz="0.105   0.103 -0.038" rpy="-${pi/2} 0 0" axis="0 0 1" />
+    <xacro:wheel_continuous_joint name="back_right_joint" parent="base_link"
+        child="back_right_wheel"
         xyz="-0.115 -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
-    <xacro:wheel_continuous_joint name="back_left_joint" parent="base_link" child="back_left_wheel"
-        xyz="-0.115  0.103 -0.038" rpy="${pi/2} 0 0" axis="0 0 1" />
+    <xacro:wheel_continuous_joint name="back_left_joint" parent="base_link" 
+        child="back_left_wheel"
+        xyz="-0.115  0.103 -0.038" rpy="-${pi/2} 0 0" axis="0 0 1" />
+
 
 
 </robot>
