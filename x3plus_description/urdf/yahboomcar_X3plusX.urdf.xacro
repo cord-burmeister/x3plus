@@ -3,6 +3,11 @@
     xmlns:gz="http://gazebosim.org/schema">
 
     <!-- define the list of relevant args -->
+    <xacro:arg name="fixedPLZJoints" default="true" />
+
+    <!-- set the internal properties based on the arguments -->
+    <xacro:property name="fixedPLZJoints" value="$(arg fixedPLZJoints)" />
+
     <!-- <xacro:if value="${namespace == 'None'}">
         <xacro:property name="ns" value="" />
       </xacro:if>
@@ -216,9 +221,18 @@
                 izz="1.49639510661413E-05" />
         </inertial>
     </xacro:common_link>
-    <xacro:revolute_joint name="arm_joint1" parent="base_link" child="arm_link1"
+
+    <xacro:if value="${fixedPLZJoints}">
+        <xacro:fixed_joint name="arm_joint1" parent="base_link" child="arm_link1"
+        xyz="0.09825 0 0.102" rpy="0 0 0" />
+    </xacro:if>
+    <xacro:unless value="${fixedPLZJoints}">
+        <xacro:revolute_joint name="arm_joint1" parent="base_link" child="arm_link1"
         xyz="0.09825 0 0.102" rpy="0 0 0" axisZ="-1"
         lower="-${pi/2}" upper="${pi/2}" />
+    </xacro:unless>
+
+  
 
     <xacro:common_link name="arm_link2b" material="Green" path="X3plus">
         <inertial>
@@ -233,8 +247,16 @@
                 izz="2.4695E-05" />
         </inertial>
     </xacro:common_link>
-    <xacro:revolute_joint name="arm_joint2" parent="arm_link1" child="arm_link2b" xyz="0 0 0.0405"
+
+    <xacro:if value="${fixedPLZJoints}">
+        <xacro:fixed_joint name="arm_joint2" parent="arm_link1" child="arm_link2b" xyz="0 0 0.0405"
+        rpy="-${pi/2} 0 0"   />
+    </xacro:if>
+    <xacro:unless value="${fixedPLZJoints}">
+        <xacro:revolute_joint name="arm_joint2" parent="arm_link1" child="arm_link2b" xyz="0 0 0.0405"
         rpy="-${pi/2} 0 0" axisZ="-1" lower="-${pi/2}" upper="${pi/2}" />
+    </xacro:unless>
+
 
     <xacro:fixed_joint name="camera_joint" parent="arm_link2b" child="camera_link" xyz="0 -0.07 0"
         rpy="${pi/2} 0 0" />
@@ -454,7 +476,8 @@
     <xacro:wheel_continuous_joint name="back_right_joint" parent="base_link"
         child="back_right_wheel"
         xyz="-0.115 -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
-    <xacro:wheel_continuous_joint name="back_left_joint" parent="base_link" child="back_left_wheel"
+    <xacro:wheel_continuous_joint name="back_left_joint" parent="base_link" 
+        child="back_left_wheel"
         xyz="-0.115  0.103 -0.038" rpy="${pi/2} 0 0" axis="0 0 1" />
 
 
@@ -469,21 +492,21 @@
                 <!-- Longitudinal distance between front and back wheels -->
                 <wheelbase>0.16</wheelbase>
                 <!-- Wheel radius -->
-                <wheel_radius>-0.042</wheel_radius>
+                <wheel_radius>0.042</wheel_radius>
                 <!-- <min_acceleration>-5</min_acceleration>
                 <max_acceleration>5</max_acceleration> -->
 
-                <max_velocity>3.0</max_velocity>
-                <min_velocity>-3.0</min_velocity>
+                <!-- <max_velocity>3.0</max_velocity>
+                <min_velocity>-3.0</min_velocity> -->
                 <!-- <min_jerk>3</min_jerk>
                 <max_jerk>-3</max_jerk> -->
 
-                <odom_publish_frequency>10</odom_publish_frequency>
+                <!-- <odom_publish_frequency>10</odom_publish_frequency>
                 <odom_topic>/odometry</odom_topic>
                 <publish_odom_tf>false</publish_odom_tf>
                 <publish_wheel_tf>true</publish_wheel_tf>                
                 <topic>/cmd_vel</topic>
-                <tf_topic>/pose</tf_topic>
+                <tf_topic>/pose</tf_topic> -->
     
             </plugin>
         </gazebo>
@@ -569,7 +592,7 @@
             <update_rate>1</update_rate>
             <visualize>true</visualize>
             <topic>imu</topic>
-            <gz_frame_id>base_link</gz_frame_id>
+            <frame_id >base_link</frame_id >
             <imu>
                 <angular_velocity>
                   <x>
@@ -632,7 +655,7 @@
         <pose relative_to='laser_link'>0 0 0 0 0 0</pose>
         <topic>lidar</topic>
         <update_rate>10</update_rate>
-        <gz_frame_id>laser_link</gz_frame_id>
+        <frame_id >laser_link</frame_id >
         <ray>
                 <scan>
                     <horizontal>
@@ -668,7 +691,7 @@
             <topic>/color/image_raw</topic>
             <visualize>true</visualize>
 
-            <gz_frame_id>camera_link</gz_frame_id>
+            <frame_id >camera_link</frame_id >
             <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
             <image>
                 <width>640</width>
@@ -686,8 +709,8 @@
             <update_rate>10.0</update_rate>
             <topic>/depth/image_raw</topic>
             <visualize>true</visualize>
-            <!-- <gz_frame_id>camera_link</gz_frame_id> -->
-            <gz_frame_id>camera_link_optical</gz_frame_id>
+            <!-- <frame_id >camera_link</frame_id > -->
+            <frame_id >camera_link_optical</frame_id >
             <camera>
                 <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
                 <image>
@@ -714,8 +737,8 @@
             <topic>/color/opt/image_raw</topic>
             <visualize>true</visualize>
 
-            <!-- <gz_frame_id>camera_link</gz_frame_id> -->
-            <gz_frame_id>camera_link_optical</gz_frame_id>
+            <!-- <frame_id >camera_link</frame_id > -->
+            <frame_id >camera_link_optical</frame_id >
             <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
             <image>
                 <width>640</width>
@@ -734,8 +757,8 @@
             <update_rate>10.0</update_rate>
             <topic>/depth/opt/image_raw</topic>
             <visualize>true</visualize>
-            <!-- <gz_frame_id>camera_link</gz_frame_id> -->
-            <gz_frame_id>camera_link_optical</gz_frame_id>
+            <!-- <frame_id >camera_link</frame_id > -->
+            <frame_id >camera_link_optical</frame_id >
             <camera>
                 <horizontal_fov>${60.0/180.0*pi}</horizontal_fov>
                 <image>
