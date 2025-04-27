@@ -129,7 +129,7 @@
             <collision>
                 <pose>0 0 0 0 0 0</pose>
                 <geometry>
-                    <sphere radius="0.032391999999999997" />
+                    <sphere radius="0.04" />
                 </geometry>
             </collision>
             <xacro:insert_block name="origin" />
@@ -472,13 +472,13 @@
         xyz="0.105  -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
     <xacro:wheel_continuous_joint name="front_left_joint" parent="base_link"
         child="front_left_wheel"
-        xyz="0.105   0.103 -0.038" rpy="${pi/2} 0 0" axis="0 0 1" />
+        xyz="0.105   0.103 -0.038" rpy="-${pi/2} 0 0" axis="0 0 1" />
     <xacro:wheel_continuous_joint name="back_right_joint" parent="base_link"
         child="back_right_wheel"
         xyz="-0.115 -0.103 -0.038" rpy="${pi/2} 0 ${pi}" axis="0 0 1" />
     <xacro:wheel_continuous_joint name="back_left_joint" parent="base_link" 
         child="back_left_wheel"
-        xyz="-0.115  0.103 -0.038" rpy="${pi/2} 0 0" axis="0 0 1" />
+        xyz="-0.115  0.103 -0.038" rpy="-${pi/2} 0 0" axis="0 0 1" />
 
 
    <gazebo>
@@ -488,25 +488,27 @@
                 <back_left_joint>back_left_joint</back_left_joint>
                 <back_right_joint>back_right_joint</back_right_joint>
                 <!-- Lateral distance between left and right wheels -->
-                <wheel_separation>0.169</wheel_separation>
+                 <!-- end 2 end is 245.6 mm ; width of the wheel is 37.4 ==> 0.2082 -->
+                <wheel_separation>0.2082</wheel_separation>
                 <!-- Longitudinal distance between front and back wheels -->
-                <wheelbase>0.16</wheelbase>
+                <wheelbase>0.22</wheelbase>
                 <!-- Wheel radius -->
-                <wheel_radius>0.042</wheel_radius>
-                <!-- <min_acceleration>-5</min_acceleration>
-                <max_acceleration>5</max_acceleration> -->
+                <wheel_radius>0.040</wheel_radius>
+
+                <min_acceleration>-5</min_acceleration>
+                <max_acceleration>5</max_acceleration> 
 
                 <!-- <max_velocity>3.0</max_velocity>
                 <min_velocity>-3.0</min_velocity> -->
                 <!-- <min_jerk>3</min_jerk>
                 <max_jerk>-3</max_jerk> -->
 
-                <!-- <odom_publish_frequency>10</odom_publish_frequency>
+                <odom_publish_frequency>10</odom_publish_frequency>
                 <odom_topic>/odometry</odom_topic>
                 <publish_odom_tf>false</publish_odom_tf>
                 <publish_wheel_tf>true</publish_wheel_tf>                
                 <topic>/cmd_vel</topic>
-                <tf_topic>/pose</tf_topic> -->
+                <tf_topic>/pose</tf_topic>
     
             </plugin>
         </gazebo>
