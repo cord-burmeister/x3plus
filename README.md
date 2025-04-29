@@ -69,7 +69,7 @@ ros2 launch x3plus_description display_Xacro.launch.py
 One of the first possibilities to control a definitions of a robot is to operate it remotely with a teleoperation. There is a package which converts console input into twist messages. Note that the command with the default topic will be mapped to the robot topic.
 
 ``` bash
-ros2 run  teleop_twist_keyboard teleop_twist_keyboard --ros-args --remap cmd_vel:=master3_drive/cmd_vel
+ros2 run  teleop_twist_keyboard teleop_twist_keyboard 
 ```
 
 ### Adding tele-operation with X-Box One S pad
