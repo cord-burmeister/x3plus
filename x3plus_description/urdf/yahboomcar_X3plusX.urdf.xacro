@@ -659,7 +659,7 @@
             <!--
                 When using the following frame_id, the following error is shown during the launch in rviz2:
             
-                [rviz2-5] [INFO] [1745951906.206204296] [rviz]: Message Filter dropping message: frame 'master3_drive/base_footprint/gpu_lidar' 
+                [rviz2-5] [INFO] [1745951906.206204296] [rviz]: Message Filter dropping message: frame 'x3plus_bot/base_footprint/gpu_lidar' 
                 at time 73.900 for reason 'the timestamp on the message is earlier than all the data in the transform cache'
 
                 Which is caused by the fact that the frame_id is not set to the correct frame id
