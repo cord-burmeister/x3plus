@@ -1,0 +1,51 @@
+
+#   12.name = ~min_frontier_size
+# }
+
+# req_tf {
+#   0.from = global_frame
+#   0.to = robot_base_frame
+#   0.desc = This transformation is usually provided by mapping algorithm. Those frames are usually called `map` and `base_link`. For adjusting `robot_base_frame` name see respective parameter. You don't need to set `global_frame`. The name for `global_frame` will be sourced from `costmap_topic` automatically.
+# }
+
+# act_called {
+#   0.name = move_base
+#   0.type = move_base_msgs/MoveBaseAction
+#   0.desc = [[move_base]] actionlib API for posting goals. See [[move_base#Action API]] for details. This expects [[move_base]] node in the same namespace as `explore_lite`, you may want to remap this node if this is not true.
+# }
+# }}}
+explore_node:
+  ros__parameters:
+    # The name of the base frame of the robot. This is used for determining robot position on map. Mandatory.
+    robot_base_frame: base_link
+    # Specifies topic of source <<MsgLink(nav_msgs/OccupancyGrid)>>. Mandatory.
+    costmap_topic: /global_costmap/costmap
+    # Specifies topic of source <<MsgLink(map_msgs/OccupancyGridUpdate)>>. Not necessary if source of map is always publishing full updates, i.e. does not provide this topic.    
+    costmap_updates_topic: /global_costmap/costmap_updates
+    # Specifies whether or not publish visualized frontiers.
+    visualize: true
+    # Rate in Hz at which new frontiers will computed and goal reconsidered.
+    # default = `1.0`
+    planner_frequency: 0.01
+    # Time in seconds. When robot do not make any progress for `progress_timeout`, current goal will be abandoned.
+    # default = `30.0`
+    progress_timeout: 120.0
+    # Used for weighting frontiers. This multiplicative parameter affects frontier potential component of the frontier
+    #  weight (distance to frontier).
+    # default = `1e-3` 5.0
+    # potential_scale: 0.0001
+    potential_scale: 10.0
+    # Used for weighting frontiers. This multiplicative parameter affects frontier orientation component of the frontier weight. 
+    # This parameter does currently nothing and is provided solely for forward compatibility.
+    # default = `0`
+    orientation_scale: 0.1
+    # Used for weighting frontiers. This multiplicative parameter affects frontier gain component of 
+    # the frontier weight (frontier size).
+    # default = `1.0`
+    gain_scale: 1.0
+    # Transform tolerance to use when transforming robot pose.
+    # default = `0.3`
+    transform_tolerance: 0.1
+    # Minimum size of the frontier to consider the frontier as the exploration goal. In meters.
+    # default = `0.5`
+    min_frontier_size: 0.2
