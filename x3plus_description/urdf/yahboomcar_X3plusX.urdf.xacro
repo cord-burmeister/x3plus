@@ -505,7 +505,7 @@
                 <max_jerk>-3</max_jerk> -->
 
                 <odom_publish_frequency>10</odom_publish_frequency>
-                <odom_topic>/odometry</odom_topic>
+                <odom_topic>/wheel/odometry</odom_topic>
                 <publish_odom_tf>false</publish_odom_tf>
                 <publish_wheel_tf>true</publish_wheel_tf>                
                 <topic>/cmd_vel</topic>
@@ -561,9 +561,9 @@
         `sensor_tutorial.sdf` and add the code from `moving_robot.sdf` to it.
         To define the `IMU` sensor add this code under the `<world>` tag: 
     -->
-    <!-- <plugin filename="gz-sim-imu-system"
+    <plugin filename="gz-sim-imu-system"
         name="gz::sim::systems::Imu">
-    </plugin> -->
+    </plugin>
 
 <!-- 
     Odometry Publisher which can be attached to any entity in order to periodically publish 2D or 3D odometry data in the form of gz::msgs::Odometry messages.
