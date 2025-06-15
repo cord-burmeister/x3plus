@@ -33,6 +33,8 @@ amcl:
     save_pose_rate: 0.5
     sigma_hit: 0.2
     tf_broadcast: true
+    # This increases the TF buffer size to 5 seconds, which helps prevent transform extrapolation issues.
+    tf_buffer_duration: 5.0  # Duration in seconds
     transform_tolerance: 1.0
     update_min_a: 0.2
     update_min_d: 0.25

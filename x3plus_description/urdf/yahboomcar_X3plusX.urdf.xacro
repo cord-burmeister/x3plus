@@ -63,7 +63,6 @@
         <origin xyz="0.0 0.0 0.076" rpy="0 0 0" />
     </joint>
 
-    <!-- <link name="imu_link"/> -->
     <!-- common link-->
     <xacro:macro name="common_link" params="name material path *origin">
         <link name="${name}">
@@ -183,8 +182,14 @@
     </common_link>
     <fixed_joint name="base_joint" parent="base_footprint" child="base_link" xyz="0.0 0.0 0.076" rpy="0
     0 0"/> -->
-    <!-- <fixed_joint name="base_imu" parent="base_link" child="imu_link" xyz="0.001 0.017 0.0322"
-    rpy="0 3.1415 1.5707"/> -->
+
+    <link name="imu_link"/>
+
+    <xacro:fixed_joint name="base_imu" parent="base_link" child="imu_link" xyz="0 0 0"
+        rpy="0 0 0"/> 
+
+    <!-- <xacro:fixed_joint name="base_imu" parent="base_link" child="imu_link" xyz="0.001 0.017 0.0322"
+        rpy="0 3.1415 1.5707"/>  -->
 
     <xacro:common_link name="laser_link" material="White" path="sensor">
         <inertial>
@@ -595,8 +600,11 @@
             <update_rate>10</update_rate>
             <visualize>true</visualize>
             <topic>imu</topic>
-            <!-- <frame_id >base_link</frame_id > -->
-            <gz_frame_id>base_link</gz_frame_id >
+            <gz_frame_id>base_link</gz_frame_id>
+            <!-- <gz_frame_id>imu_link</gz_frame_id> -->
+            <!-- Set whether to output orientation. Not all imu's generate orientation values as they use filters to produce orientation estimates. -->
+            <!-- <orientation_enabled>false</orientation_enabled> -->
+
             <imu>
                 <angular_velocity>
                   <x>
@@ -653,6 +661,34 @@
               </imu>
         </sensor>
     </gazebo>
+
+     <!-- <sensor name="magnetometer" type="magnetometer">
+          <always_on>1</always_on>
+          <update_rate>100</update_rate>
+          <visualize>true</visualize>
+          <topic>magnetometer</topic>
+          <enable_metrics>true</enable_metrics>
+          <magnetometer>
+            <x>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.1</stddev>
+              </noise>
+            </x>
+            <y>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.1</stddev>
+              </noise>
+            </y>
+            <z>
+              <noise type="gaussian">
+                <mean>0.0</mean>
+                <stddev>0.1</stddev>
+              </noise>
+            </z>
+          </magnetometer>
+        </sensor> -->
 
     <gazebo reference="laser_link">
         <sensor name='gpu_lidar' type='gpu_lidar'> 
