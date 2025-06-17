@@ -243,7 +243,7 @@ def generate_launch_description():
 
     # Add the actions to launch all of the navigation nodes
     ld.add_action(rviz_cmd)
-    ## TODO ld.add_action(imu_filter_madgwick_cmd)
+    ld.add_action(imu_filter_madgwick_cmd)
     ld.add_action(robot_localization_cmd)
     ld.add_action(bringup_cmd)
     
