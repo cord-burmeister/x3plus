@@ -185,11 +185,11 @@
 
     <link name="imu_link"/>
 
-    <xacro:fixed_joint name="base_imu" parent="base_link" child="imu_link" xyz="0 0 0"
-        rpy="0 0 0"/> 
-
-    <!-- <xacro:fixed_joint name="base_imu" parent="base_link" child="imu_link" xyz="0.001 0.017 0.0322"
+    <!-- <xacro:fixed_joint name="base_imu" parent="base_link" child="imu_link" xyz="0 0 0"
         rpy="0 3.1415 1.5707"/>  -->
+
+    <xacro:fixed_joint name="base_imu" parent="base_link" child="imu_link" xyz="0.001 0.017 0.0322"
+        rpy="0 3.1415 1.5707"/> 
 
     <xacro:common_link name="laser_link" material="White" path="sensor">
         <inertial>
@@ -594,16 +594,16 @@
       </plugin>
     </gazebo>
 
-    <gazebo reference="base_link">
+    <gazebo reference="imu_link">
         <sensor name="imu_sensor" type="imu">
             <always_on>1</always_on>
             <update_rate>10</update_rate>
             <visualize>true</visualize>
             <topic>imu</topic>
-            <gz_frame_id>base_link</gz_frame_id>
+            <gz_frame_id>imu_link</gz_frame_id>
             <!-- <gz_frame_id>imu_link</gz_frame_id> -->
             <!-- Set whether to output orientation. Not all imu's generate orientation values as they use filters to produce orientation estimates. -->
-            <!-- <orientation_enabled>false</orientation_enabled> -->
+            <orientation_enabled>false</orientation_enabled>
 
             <imu>
                 <angular_velocity>
