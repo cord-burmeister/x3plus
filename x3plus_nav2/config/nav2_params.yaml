@@ -311,7 +311,7 @@ local_costmap:
         # NOTE: since the cost_scaling_factor is multiplied by a negative in the formula, increasing the factor will decrease the resulting cost values.
         # cost_scaling_factor: 3.0
         cost_scaling_factor: 3.0
-        inflation_radius: 0.36 # The radius in meters to which the map inflates obstacle cost values
+        inflation_radius: 0.56 # The radius in meters to which the map inflates obstacle cost values
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -438,7 +438,8 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: scan pointcloud
+#        observation_sources: scan pointcloud
+        observation_sources: scan 
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -449,17 +450,17 @@ global_costmap:
           raytrace_min_range: 0.08
           obstacle_max_range: 2.5
           obstacle_min_range: 0.08
-        pointcloud:  # no frame set, uses frame from message
-          topic: /depth/image_raw/points
-          max_obstacle_height: 1.2
-          min_obstacle_height: 0.2
-          obstacle_max_range: 4.5
-          obstacle_min_range: 0.05
-          raytrace_max_range: 8.0
-          raytrace_min_range: 0.05
-          clearing: True
-          marking: True
-          data_type: "PointCloud2"                  
+        # pointcloud:  # no frame set, uses frame from message
+        #   topic: /depth/image_raw/points
+        #   max_obstacle_height: 1.2
+        #   min_obstacle_height: 0.2
+        #   obstacle_max_range: 4.5
+        #   obstacle_min_range: 0.05
+        #   raytrace_max_range: 8.0
+        #   raytrace_min_range: 0.05
+        #   clearing: True
+        #   marking: True
+        #   data_type: "PointCloud2"                  
       # This implements a costmap layer taking in a map from either SLAM or map_server (or other) to place into the costmap. 
       # It resizes the costmap to its size and places the static obstacles on the planning space.
       static_layer:
