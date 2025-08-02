@@ -178,14 +178,14 @@ def generate_launch_description():
                           'use_namespace': use_namespace,
                           'rviz_config': rviz_config_file}.items())
 
-    imu_filter_madgwick_cmd = Node(
-            package='imu_filter_madgwick',
-            executable='imu_filter_madgwick_node',
-            name='imu_filter_madgwick',
-            output='screen',
-         parameters=[os.path.join(pkg_location, 'config/imu_filter_param.yaml'), 
-                     {'use_sim_time': use_sim_time}]
-        )
+    # imu_filter_madgwick_cmd = Node(
+    #         package='imu_filter_madgwick',
+    #         executable='imu_filter_madgwick_node',
+    #         name='imu_filter_madgwick',
+    #         output='screen',
+    #      parameters=[os.path.join(pkg_location, 'config/imu_filter_param.yaml'), 
+    #                  {'use_sim_time': use_sim_time}]
+        # )
 
             # parameters=[{
             #     'use_mag': False,  # Set True if magnetometer data is used
@@ -243,7 +243,7 @@ def generate_launch_description():
 
     # Add the actions to launch all of the navigation nodes
     ld.add_action(rviz_cmd)
-    ld.add_action(imu_filter_madgwick_cmd)
+    # ld.add_action(imu_filter_madgwick_cmd)
     ld.add_action(robot_localization_cmd)
     ld.add_action(bringup_cmd)
     
