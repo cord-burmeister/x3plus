@@ -1,0 +1,39 @@
+# See documentation under https://wiki.ros.org/laser_filters
+scan_to_scan_filter_chain:
+  ros__parameters:
+    # This filter removes points in a sensor_msgs/LaserScan outside of certain 
+    # angular bounds by changing the minimum and maximum angle.
+    filter1:
+      name: angle
+      type: laser_filters/LaserScanAngularBoundsFilter
+      params:
+        lower_angle: -1.52
+        upper_angle: 1.52
+    # This filter removes points in a sensor_msgs/LaserScan outside of certain 
+    # range bounds by changing the minimum and maximum range.
+    # It can also replace points outside of the range with a specified value.
+    # If use_message_range_limits is true, it will use the range limits from the
+    # LaserScan message, otherwise it will use the specified lower and upper thresholds.
+    # If the range is outside the specified bounds, it will replace the value with
+    # lower_replacement_value or upper_replacement_value.
+    # If not specified, these defaults to NaN.
+    # If use_message_range_limits is false, the default values for lower_threshold and
+    # upper_threshold are 0.0 and 100000.0 respectively.
+    # If use_message_range_limits is true, the default values for lower_threshold and
+    # upper_threshold are the minimum and maximum range limits from the LaserScan message.
+    # If lower_replacement_value and upper_replacement_value are not specified, they default to
+    # NaN.
+    # If use_message_range_limits is true, the lower_replacement_value and upper_replacement_value
+    # will be set to the minimum and maximum range limits from the LaserScan message.
+    # If use_message_range_limits is false, the lower_replacement_value and upper_replacement_value
+    # will be set to -inf and inf respectively.
+    # This filter is useful for removing noise or invalid readings from the LaserScan data.           
+    # filter2:
+    #       name: box_filter
+    #       type: laser_filters/LaserScanRangeFilter
+    #       params:
+    #         use_message_range_limits: true   # se the range_min and range_max values from the laserscan message as threshold. Defaults to false
+    #         lower_threshold: 0.5              # if not specified defaults to 0.0
+    #         upper_threshold: 20.0              # if not specified defaults to 100000.0
+    #         # lower_replacement_value: -.inf    # if not specified defaults to NaN
+    #         # upper_replacement_value: .inf     # if not specified defaults to NaN
