@@ -3,12 +3,24 @@ scan_to_scan_filter_chain:
   ros__parameters:
     # This filter removes points in a sensor_msgs/LaserScan outside of certain 
     # angular bounds by changing the minimum and maximum angle.
+    # filter1:
+    #   name: angle
+    #   type: laser_filters/LaserScanAngularBoundsFilter
+    #   params:
+    #     # lower_angle: -3.14159
+    #     # upper_angle: -1.52
+    #     lower_angle: -3.14159
+    #     upper_angle: 1.52
+    # This filter removes points in a sensor_msgs/LaserScan inside of certain angular bounds. 
+    # These points are "removed" by setting the corresponding range value to range_max + 1, 
+    # which is assumed to be an error case.        
     filter1:
       name: angle
-      type: laser_filters/LaserScanAngularBoundsFilter
+      type: laser_filters/LaserScanAngularBoundsFilterInPlace
       params:
         lower_angle: -1.52
         upper_angle: 1.52
+
     # This filter removes points in a sensor_msgs/LaserScan outside of certain 
     # range bounds by changing the minimum and maximum range.
     # It can also replace points outside of the range with a specified value.

@@ -208,7 +208,7 @@
         xyz="0.10478 0 0" rpy="0 0 0" />
 
         <xacro:fixed_joint name="laser_joint" parent="base_link" child="laser_link"
-        xyz="0.10478 0 0.035" rpy="0 0 0" />
+        xyz="0.10478 0 0.035" rpy="0 0 3.14159" />
         <!-- xyz="0.10478 0 0.0471" rpy="0 0 0" /> -->
 
     <xacro:common_link name="camera_link" material="White" path="sensor">
@@ -698,6 +698,7 @@
     <gazebo reference="laser_link">
         <sensor name='gpu_lidar' type='gpu_lidar'> 
             <pose relative_to='laser_link'>0 0 0 0 0 0</pose>
+            <!-- <pose relative_to='laser_link'>0 0 0 0 0 0</pose> -->
             <topic>lidar</topic>
             <update_rate>10</update_rate>
             <!--

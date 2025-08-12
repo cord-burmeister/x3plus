@@ -86,6 +86,8 @@ def generate_launch_description():
 #region  Launch configuration variables specific to simulation
     rviz_config_file = LaunchConfiguration('rviz_config_file')
     use_rviz = LaunchConfiguration('use_rviz')
+    use_x3plus = LaunchConfiguration('use_x3plus')
+
 #endregion 
 
 #region  Declare the launch arguments
@@ -163,6 +165,11 @@ def generate_launch_description():
         default_value='True',
         description='Whether to start RVIZ')
 
+    declare_use_x3plus_cmd = DeclareLaunchArgument(
+        'use_x3plus',
+        default_value='False',
+        description='Whether to start the x3plus logic')
+
     declare_map_cmd = DeclareLaunchArgument(
         'map',
         default_value=os.path.join(pkg_home, 'maps', 'map.yaml'),
@@ -219,6 +226,7 @@ def generate_launch_description():
     bringup_cmd = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(launch_dir, 'bringup_launch.py')),
+        condition=IfCondition(use_x3plus),
         launch_arguments={'namespace': namespace,
                           'use_namespace': use_namespace,
                           'slam': slam,
@@ -246,6 +254,7 @@ def generate_launch_description():
     ld.add_action(declare_rviz_config_file_cmd)
     ld.add_action(declare_use_robot_state_pub_cmd)
     ld.add_action(declare_use_rviz_cmd)
+    ld.add_action(declare_use_x3plus_cmd)
     ld.add_action(declare_map_cmd)
 
     # ld.add_action(declare_robot_name_cmd)
