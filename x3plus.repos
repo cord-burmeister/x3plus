@@ -3,6 +3,10 @@ repositories:
     type: git
     url: https://github.com/cord-burmeister/x3plus.git
     version: main
+  x3plus_pit:
+    type: git
+    url: https://github.com/cord-burmeister/x3plus_pit.git
+    version: main	
   laser_filters:
     type: git
     url: https://github.com/ros-perception/laser_filters.git

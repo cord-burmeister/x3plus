@@ -84,3 +84,9 @@ ros2 launch x3plus_teleop joystick_xbox.launch.py
 |------|-------------|
 | x3plus_setup | This is an empty ROS package which contains some installation scripts to setup the workspace |
 | x3plus_description | The URDF and XACRO description of the robot |
+
+## Github Pages
+
+The web site of the project can be found under
+
+[Github Pages](https://cord-burmeister.github.io/x3plus_docs/)
