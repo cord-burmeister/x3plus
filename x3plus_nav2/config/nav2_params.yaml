@@ -150,6 +150,9 @@ bt_navigator_navigate_to_pose_rclcpp_node:
 
 controller_server:
   ros__parameters:
+    # General controller server parameters
+    odom_topic: "/odometry/filtered"
+    # cmd_vel_topic: "/my_robot/cmd_vel"  
     use_sim_time: true
     controller_frequency: 5.0
     min_x_velocity_threshold: 0.001
