@@ -16,7 +16,17 @@ ekf_filter_node:
         publish_acceleration: true
 
 # Whether to broadcast the transformation over the /tf topic. Defaults to true if unspecified.
-        publish_tf: true
+# When to Disable publish_tf
+# You must set publish_tf to false if another part of your system is already publishing the 
+# required transform to avoid TF conflicts, which are a major cause of robot "jumping" or errors like TF_OLD_DATA. 
+# * Global EKF (Map Level): If you are using a second EKF instance for global localization 
+# (fusing GPS or AMCL data) where the world_frame is set to map_frame (e.g., map), this instance 
+# should not publish the map -> base_link transform directly. Instead, it publishes 
+# a map -> odom transform, using the odom -> base_link transform provided by the local EKF instance.
+# * External Odometry Source: In a simulation environment like Gazebo, the differential drive plugin 
+# often publishes the odom -> base_link transform automatically. In this case, you would disable 
+# the EKF's publish_tf and only use its filtered odometry data via the /odometry/filtered topic. 
+        publish_tf: false
         
 # 1. Set the map_frame, odom_frame, and base_link frames to the appropriate frame names for your system.
 #     1a. If your system does not have a map_frame, just remove it, and make sure "world_frame" is set to the value of odom_frame.
