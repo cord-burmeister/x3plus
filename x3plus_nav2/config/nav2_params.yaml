@@ -6,7 +6,7 @@ amcl:
 
     global_frame_id: map
     odom_frame_id: odom
-    base_frame_id: base_link
+    base_frame_id: base_footprint
     scan_topic: scan
 
     robot_model_type: nav2_amcl::DifferentialMotionModel
@@ -15,7 +15,8 @@ amcl:
     always_reset_initial_pose: true
 
     tf_broadcast: true
-    transform_tolerance: 1.0
+    # Time with which to post-date the transform that is published, to indicate that this transform is valid into the future.
+    transform_tolerance: 2.0
 
     alpha1: 0.2
     alpha2: 0.2
@@ -70,7 +71,7 @@ bt_navigator:
     use_sim_time: True
     # Reference frame.
     global_frame: map
-    robot_base_frame: base_link
+    robot_base_frame: base_footprint
     # Topic on which odometry is published
     odom_topic: /odometry/filtered
     # Duration (in milliseconds) for each iteration of BT execution.
@@ -254,7 +255,7 @@ local_costmap:
       update_frequency: 5.0 # Frequency to update the costmap
       publish_frequency: 2.0 # Frequency to publish the costmap
       global_frame: odom # The global frame of the costmap
-      robot_base_frame: base_link # The robot's base frame
+      robot_base_frame: base_footprint # The robot's base frame
       use_sim_time: True # Use simulation time if running in a simulator
       rolling_window: true # Use a rolling window for the costmap
       width: 3 # Width of the costmap
@@ -417,7 +418,7 @@ global_costmap:
       update_frequency: 1.0
       publish_frequency: 1.0
       global_frame: map
-      robot_base_frame: base_link
+      robot_base_frame: base_footprint
       use_sim_time: True
       # For the global costmap footprint, the decision to choose between the robot_radius (circular) 
       # or footprint (polygon) parameter depends on the robot, its environment, and the path planning algorithm you will use. 
@@ -673,7 +674,7 @@ behavior_server:
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
     global_frame: odom
-    robot_base_frame: base_link
+    robot_base_frame: base_footprint
     transform_tolerance: 0.1
     use_sim_time: true
     simulate_ahead_time: 2.0
