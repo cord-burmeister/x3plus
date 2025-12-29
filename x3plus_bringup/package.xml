@@ -2,14 +2,14 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>x3plus_bringup</name>
-  <version>0.0.0</version>
+  <version>0.1.0</version>
   <description>Roboter launch files</description>
   <maintainer email="cord.burmeister@live.de">marvin</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-    <depend>laser_filters</depend>
+  <depend>laser_filters</depend>
 
   <depend>x3plus_description</depend>
 <!--  <depend>master3_gazebo</depend> -->
