@@ -4,10 +4,12 @@
 
     <!-- define the list of relevant args -->
     <xacro:arg name="fixedPLZJoints" default="true" />
-    <xacro:arg name="fixedPLZJoints" default="true"  />
+    <xacro:arg name="addCalibration" default="true" />
+
 
     <!-- set the internal properties based on the arguments -->
     <xacro:property name="fixedPLZJoints" value="$(arg fixedPLZJoints)" />
+    <xacro:property name="addCalibration" value="$(arg addCalibration)" />
 
     <!-- <xacro:if value="${namespace == 'None'}">
         <xacro:property name="ns" value="" />
@@ -492,6 +494,15 @@
         child="back_left_wheel"
         xyz="-0.115  0.103 -0.038" rpy="-${pi/2} 0 0" axis="0 0 1" />
 
+    <xacro:if value="${addCalibration}">
+
+        <xacro:include filename="$(find x3plus_description)/urdf/calibration/apriltag_marker.xacro" />
+
+        <xacro:apriltag_marker namespace="" name="calibration_tag" parent="base_link" family="36_11" ID="1" size="0.1"> 
+                    <origin xyz="0 0 0.2" rpy=" 0 0 0" />
+        </xacro:apriltag_marker>
+    </xacro:if>
+
 
    <gazebo>
             <plugin name='gz::sim::systems::MecanumDrive' filename='gz-sim-mecanum-drive-system'>
@@ -547,7 +558,7 @@
         <publish_sensor_pose>: Set to true to publish sensor pose
         <publish_model_pose>: Set to true to publish model pose.
         <publish_nested_model_pose>: Set to true to publish nested model pose. The pose of the model that contains this system is also published unless publish_model_pose is set to false
-        <use_pose_vector_msg>: Set to true to publish a gz::msgs::Pose_V message instead of mulitple gz::msgs::Pose messages.
+        <use_pose_vector_msg>: Set to true to publish a gz::msgs::Pose_V message instead of multiple gz::msgs::Pose messages.
         <update_frequency>: Frequency of pose publications in Hz. A negative frequency publishes as fast as possible (i.e, at the rate of the simulation step)
         <static_publisher>: Set to true to publish static poses on a "<scoped_entity_name>/pose_static" topic. This will cause only dynamic poses to be published on the "<scoped_entity_name>/pose" topic.
         <static_update_frequency>: Frequency of static pose publications in Hz. A negative frequency publishes as fast as possible (i.e, at the rate of the simulation step). 
