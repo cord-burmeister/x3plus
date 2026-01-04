@@ -498,7 +498,7 @@
 
         <xacro:include filename="$(find x3plus_description)/urdf/calibration/apriltag_marker.xacro" />
 
-        <xacro:apriltag_marker namespace="" name="calibration_tag" parent="base_link" family="36_11" ID="1" size="0.1"> 
+        <xacro:apriltag_marker namespace="" name="robot_tag" parent="base_link" family="36_11" ID="1" size="0.1"> 
                     <origin xyz="0 0 0.2" rpy=" 0 0 0" />
         </xacro:apriltag_marker>
     </xacro:if>
