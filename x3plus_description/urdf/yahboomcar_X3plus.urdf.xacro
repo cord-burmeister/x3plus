@@ -3,12 +3,12 @@
     xmlns:gz="http://gazebosim.org/schema">
 
     <!-- define the list of relevant args -->
-    <xacro:arg name="fixedPLZJoints" default="true" />
+    <!-- <xacro:arg name="fixedPLZJoints" default="true" /> -->
     <xacro:arg name="addCalibration" default="true" />
 
 
     <!-- set the internal properties based on the arguments -->
-    <xacro:property name="fixedPLZJoints" value="$(arg fixedPLZJoints)" />
+    <!-- <xacro:property name="fixedPLZJoints" value="$(arg fixedPLZJoints)" /> -->
     <xacro:property name="addCalibration" value="$(arg addCalibration)" />
 
     <!-- <xacro:if value="${namespace == 'None'}">
@@ -237,15 +237,15 @@
         </inertial>
     </xacro:common_link>
 
-    <xacro:if value="${fixedPLZJoints}">
+    <!-- <xacro:if value="${fixedPLZJoints}">
         <xacro:fixed_joint name="arm_joint1" parent="base_link" child="arm_link1"
         xyz="0.09825 0 0.102" rpy="0 0 0" />
     </xacro:if>
-    <xacro:unless value="${fixedPLZJoints}">
+    <xacro:unless value="${fixedPLZJoints}"> -->
         <xacro:revolute_joint name="arm_joint1" parent="base_link" child="arm_link1"
         xyz="0.09825 0 0.102" rpy="0 0 0" axisZ="-1"
         lower="-${pi/2}" upper="${pi/2}" />
-    </xacro:unless>
+    <!-- </xacro:unless> -->
 
   
 
@@ -263,14 +263,14 @@
         </inertial>
     </xacro:common_link>
 
-    <xacro:if value="${fixedPLZJoints}">
+    <!-- <xacro:if value="${fixedPLZJoints}">
         <xacro:fixed_joint name="arm_joint2" parent="arm_link1" child="arm_link2b" xyz="0 0 0.0405"
         rpy="-${pi/2} 0 0"   />
     </xacro:if>
-    <xacro:unless value="${fixedPLZJoints}">
+    <xacro:unless value="${fixedPLZJoints}"> -->
         <xacro:revolute_joint name="arm_joint2" parent="arm_link1" child="arm_link2b" xyz="0 0 0.0405"
         rpy="-${pi/2} 0 0" axisZ="-1" lower="-${pi/2}" upper="${pi/2}" />
-    </xacro:unless>
+    <!-- </xacro:unless> -->
 
 
     <xacro:fixed_joint name="camera_joint" parent="arm_link2b" child="camera_link" xyz="0 -0.07 0"
@@ -545,10 +545,21 @@
             <topic>: Name of the topic to publish to. This parameter is optional, and if not provided, the joint state will be published to "/world/<world_name>/model/<model_name>/joint_state".
             <joint_name>: Name of a joint to publish. This parameter can be specified multiple times, and is optional. All joints in a model will be published if joint names are not specified. 
          -->
-      <plugin
-        filename="gz-sim-joint-state-publisher-system"
-        name="gz::sim::systems::JointStatePublisher">
-      </plugin>
+        <plugin
+            filename="gz-sim-joint-state-publisher-system"
+            name="gz::sim::systems::JointStatePublisher">
+        </plugin>
+        <plugin
+            filename="gz-sim-joint-position-controller-system"
+            name="gz::sim::systems::JointPositionController">
+            <joint_name>arm_joint1</joint_name>
+        </plugin>
+        <plugin
+            filename="gz-sim-joint-position-controller-system"
+            name="gz::sim::systems::JointPositionController">
+            <joint_name>arm_joint2b</joint_name>
+        </plugin>
+
 
       <!-- 
         Pose publisher system. Attach to an entity to publish the transform of its child entities in the form of gz::msgs::Pose messages, or a single gz::msgs::Pose_V message if "use_pose_vector_msg" is true.
@@ -862,6 +873,8 @@
                 </clip>
             </camera>
         </sensor>
+
+
 
     </gazebo>
 
