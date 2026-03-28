@@ -557,7 +557,7 @@
         <plugin
             filename="gz-sim-joint-position-controller-system"
             name="gz::sim::systems::JointPositionController">
-            <joint_name>arm_joint2b</joint_name>
+            <joint_name>arm_joint2</joint_name>
         </plugin>
 
 
