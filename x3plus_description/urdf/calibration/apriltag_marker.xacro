@@ -66,7 +66,7 @@
       <inertial>
         <mass value="0.001" />
         <origin xyz="0 0 0" rpy="0 0 0" />
-        <inertia ixx="0.00001" ixy="0" ixz="0" iyy="0.00001" iyz="0" izz="0.00002" />
+        <inertia ixx="0.00001" ixy="0.00001" ixz="0.00001" iyy="0.00001" iyz="0" izz="0.00002" />
       </inertial>
       <collision>
         <origin xyz="0 0 0" rpy="0 0 0" />
