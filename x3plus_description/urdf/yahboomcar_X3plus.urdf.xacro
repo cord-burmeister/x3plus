@@ -668,7 +668,7 @@
         <robot_base_frame>base_footprint</robot_base_frame>
       </plugin>
 
-  <!-- <plugin filename="gz-sim-linearbatteryplugin-system"
+  <plugin filename="gz-sim-linearbatteryplugin-system"
         name="gz::sim::systems::LinearBatteryPlugin">
         <battery_name>linear_battery</battery_name>
         <voltage>12</voltage>
@@ -683,7 +683,7 @@
         <soc_threshold>0.51</soc_threshold>
         <power_load>2.1</power_load>
         <start_on_motion>true</start_on_motion>
-      </plugin> -->
+      </plugin>
 
     </gazebo>
 
