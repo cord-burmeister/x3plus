@@ -66,7 +66,7 @@ def generate_launch_description():
     bringup_dir = get_package_share_directory('nav2_bringup')
     launch_dir = os.path.join(bringup_dir, 'launch')
     pkg_home = get_package_share_directory('x3plus_nav2')
-    pkg_location = get_package_share_directory('x3plus_location')
+    pkg_localization = get_package_share_directory('x3plus_localization')
     pkg_bringup = get_package_share_directory('x3plus_bringup')
 #endregion 
 
@@ -204,7 +204,7 @@ def generate_launch_description():
             executable='imu_filter_madgwick_node',
             name='imu_filter_madgwick',
             output='screen',
-         parameters=[os.path.join(pkg_location, 'config/imu_filter_param.yaml'), 
+         parameters=[os.path.join(pkg_localization, 'config/imu_filter_param.yaml'), 
                      {'use_sim_time': use_sim_time}]
         )
 
@@ -220,7 +220,7 @@ def generate_launch_description():
          executable='ekf_node',
          name='ekf_filter_node',
          output='screen',
-         parameters=[os.path.join(pkg_location, 'config/ekf.yaml'), {'use_sim_time': use_sim_time}]
+         parameters=[os.path.join(pkg_localization, 'config/ekf.yaml'), {'use_sim_time': use_sim_time}]
     )
 
     bringup_cmd = IncludeLaunchDescription(
