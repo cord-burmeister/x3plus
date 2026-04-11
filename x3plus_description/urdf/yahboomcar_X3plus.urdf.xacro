@@ -668,6 +668,16 @@
         <robot_base_frame>base_footprint</robot_base_frame>
       </plugin>
 
+      <!-- 
+      When the simulated battery drains completely (state of charge reaches 0), the plugin turns off all joints of the corresponding model, setting their joint forces to 0. 
+        Key Behaviors:
+        Automatic Movement Stop: When the battery reaches 0%, the robot will stop moving.
+        Power Consumption: The battery consumes power based on configured loads, such as joints and sensors.
+        Recharging: The system allows for recharging the battery, which would allow the robot to move again. 
+
+        This plugin is designed to simulate realistic battery usage, where depleting the battery forces the model to lose power.
+      -->
+        <!-- 
   <plugin filename="gz-sim-linearbatteryplugin-system"
         name="gz::sim::systems::LinearBatteryPlugin">
         <battery_name>linear_battery</battery_name>
@@ -684,6 +694,7 @@
         <power_load>2.1</power_load>
         <start_on_motion>true</start_on_motion>
       </plugin>
+      -->
 
     </gazebo>
 
