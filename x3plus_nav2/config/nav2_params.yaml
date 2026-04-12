@@ -267,7 +267,7 @@ controller_server:
       PathAlign.forward_point_distance: 0.1
       GoalAlign.scale: 1.0
       GoalAlign.forward_point_distance: 0.1
-      PathDist.scale: 32.0
+      PathDist.scale: 20.0
       GoalDist.scale: 2.0
       RotateToGoal.scale: 1.0
       RotateToGoal.slowing_factor: 1.3
@@ -290,7 +290,7 @@ local_costmap:
       resolution: 0.05 # Resolution of the costmap
       # For the global costmap footprint, the decision to choose between the robot_radius (circular) 
       # or footprint (polygon) parameter depends on the robot, its environment, and the path planning algorithm you will use. 
-      robot_radius: 0.28
+      robot_radius: 0.15
       # This is the default settings for the plugins
       plugins: ["obstacle_layer", "inflation_layer"]
 #      plugins: ["voxel_layer", "obstacle_layer", "inflation_layer"]
@@ -340,9 +340,24 @@ local_costmap:
         # exp(-1.0 * cost_scaling_factor * (distance_from_obstacle - inscribed_radius)) * (costmap_2d::INSCRIBED_INFLATED_OBSTACLE - 1), 
         # where costmap_2d::INSCRIBED_INFLATED_OBSTACLE is currently 254. 
         # NOTE: since the cost_scaling_factor is multiplied by a negative in the formula, increasing the factor will decrease the resulting cost values.
+ 
+        #################################################################################################################
+        # For a robot with a 0.15 m radius, a good starting point is:
+        # inflation_radius: 0.30 to 0.45 m
+        # Practical default: 0.35 m
+        # Quick rule of thumb:
+        # inflation_radius ≈ robot_radius + safety_margin
+        # With a 0.15 m robot, safety margin of 0.15 to 0.30 m gives 0.30 to 0.45 m.
+        # Tuning guidance:
+        # If the robot cuts corners too tightly or clips obstacles, increase toward 0.45 to 0.55.
+        # If it is overly conservative in narrow spaces, decrease toward 0.28 to 0.35.
+        # Keep cost_scaling_factor around 2.5 to 4.0 while tuning radius first.
+
+        # the robot needs at least 2 × (robot_radius + inflation_radius) of clearance 
+
         # cost_scaling_factor: 3.0
         cost_scaling_factor: 3.0
-        inflation_radius: 0.56 # The radius in meters to which the map inflates obstacle cost values
+        inflation_radius: 0.25 # The radius in meters to which the map inflates obstacle cost values
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -449,7 +464,7 @@ global_costmap:
       use_sim_time: True
       # For the global costmap footprint, the decision to choose between the robot_radius (circular) 
       # or footprint (polygon) parameter depends on the robot, its environment, and the path planning algorithm you will use. 
-      robot_radius: 0.28
+      robot_radius: 0.15
       resolution: 0.05
       # If false, each pixel has one of 2 states: lethal obstacle or free. If true, each pixel has one of 3 states: lethal obstacle, free, or unknown.
       # default: false
@@ -508,7 +523,7 @@ global_costmap:
         # Exponential decay factor across inflation radius.
         cost_scaling_factor: 3.0
         # Radius to inflate costmap around lethal obstacles.
-        inflation_radius: 0.56
+        inflation_radius: 0.25
         # Whether to inflate unknown cells as if lethal.
         # inflate_unknown: false
         # Whether to inflate unknown cells.
@@ -656,7 +671,7 @@ planner_server:
       # of global path planning) and operates on a weighted costmap.
       plugin: "nav2_navfn_planner/NavfnPlanner" # In Iron and older versions, "/" was used instead of "::"
       # Tolerance in meters between requested goal pose and end of path.
-      tolerance: 1.0
+      tolerance: 0.5
       # Whether to use A*. If false, uses Dijkstra’s expansion.
       # The Navfn Planner plugin in ROS (Robot Operating System) can use either the Dijkstra or A* algorithm for path planning. 
       # Here’s a brief overview of the differences between these two algorithms:
