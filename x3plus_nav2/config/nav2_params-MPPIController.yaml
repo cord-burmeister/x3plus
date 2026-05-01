@@ -1,3 +1,68 @@
+# Parameter reference:
+# config/nav2_params-MPPIController.reference.md
+
+slam_toolbox:
+  ros__parameters:
+    solver_plugin: solver_plugins::CeresSolver
+    ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+    ceres_preconditioner: SCHUR_JACOBI
+    ceres_trust_strategy: LEVENBERG_MARQUARDT
+    ceres_dogleg_type: TRADITIONAL_DOGLEG
+    ceres_loss_function: None
+
+    odom_frame: odom
+    map_frame: map
+    base_frame: base_link
+    scan_topic: /scan
+    mode: mapping
+
+    debug_logging: false
+    throttle_scans: 1
+    transform_publish_period: 0.02
+    map_update_interval: 2.0
+    resolution: 0.05
+    # Why this helps: your previous config was very aggressive, so SLAM was updating often and using long-range returns that are usually the noisiest in corridors and larger rooms. 
+    # That creates bad loop closures and scan links over time. These changes make slam_toolbox add fewer, higher-quality constraints.
+    max_laser_range: 12.0
+    minimum_time_interval: 0.3
+    transform_timeout: 0.2
+    tf_buffer_duration: 30.
+    stack_size_to_use: 40000000
+    enable_interactive_mode: true
+
+    use_scan_matching: true
+    use_scan_barycenter: true
+    minimum_travel_distance: 0.35
+    minimum_travel_heading: 0.35
+    scan_buffer_size: 10
+    scan_buffer_maximum_scan_distance: 12.0
+    link_match_minimum_response_fine: 0.1
+    link_scan_maximum_distance: 1.5
+    loop_search_maximum_distance: 3.0
+    do_loop_closing: true
+    loop_match_minimum_chain_size: 10
+    loop_match_maximum_variance_coarse: 3.0
+    loop_match_minimum_response_coarse: 0.35
+    loop_match_minimum_response_fine: 0.45
+
+    correlation_search_space_dimension: 0.5
+    correlation_search_space_resolution: 0.01
+    correlation_search_space_smear_deviation: 0.1
+
+    loop_search_space_dimension: 8.0
+    loop_search_space_resolution: 0.05
+    loop_search_space_smear_deviation: 0.03
+
+    distance_variance_penalty: 0.5
+    angle_variance_penalty: 1.0
+
+    fine_search_angle_offset: 0.00349
+    coarse_search_angle_offset: 0.349
+    coarse_angle_resolution: 0.0349
+    minimum_angle_penalty: 0.9
+    minimum_distance_penalty: 0.5
+    use_response_expansion: true
+
 amcl:
   ros__parameters:
     use_sim_time: True
@@ -6,7 +71,7 @@ amcl:
     alpha3: 0.2
     alpha4: 0.2
     alpha5: 0.2
-    base_frame_id: "base_footprint"
+    base_frame_id: "base_link"
     beam_skip_distance: 0.5
     beam_skip_error_threshold: 0.9
     beam_skip_threshold: 0.3
@@ -14,8 +79,8 @@ amcl:
     global_frame_id: "map"
     lambda_short: 0.1
     laser_likelihood_max_dist: 2.0
-    laser_max_range: 8.0
-    laser_min_range: -1.0
+    laser_max_range: 16.0
+    laser_min_range: 0.01
     laser_model_type: "likelihood_field"
     max_beams: 60
     max_particles: 2000
@@ -119,7 +184,7 @@ controller_server:
     # The most common parameters you might want to start off changing are the velocity profiles (vx_max, vx_min, wz_max, and vy_max if holonomic) 
     # and the motion_model to correspond to your vehicle. Its wise to consider the prune_distance of the path plan in proportion to your maximum 
     # velocity and prediction horizon. The only deeper parameter that will likely need to be adjusted for your particular settings is the Obstacle critics’ 
-    # repulsion_weight since the tuning of this is proprtional to your inflation layer’s radius. Higher radii should correspond to reduced repulsion_weight 
+    # repulsion_weight since the tuning of this is proportional to your inflation layer’s radius. Higher radii should correspond to reduced repulsion_weight 
     # due to the penalty formation (e.g. inflation_radius - min_dist_to_obstacle). If this penalty is too high, the robot will slow significantly 
     # when entering cost-space from non-cost space or jitter in narrow corridors. It is noteworthy, but likely not necessary to be changed, 
     # that the Obstacle critic may use the full footprint information if consider_footprint = true, though comes at an increased compute cost.      
@@ -163,7 +228,7 @@ controller_server:
       vy_max: 0.25
       # Default 1.9. Max WZ (rad/s)
       # wz_max: 1.9
-      wz_max: 13.8
+      wz_max: 1.9
       # Default 1. Iteration count in MPPI algorithm. Recommend to keep as 1 and prefer more batches.
       iteration_count: 1
       # Default: 0.3. Selectiveness of trajectories by their costs (The closer this value to 0, the "more" 
@@ -180,10 +245,10 @@ controller_server:
       # Visualization of the trajectories using visualize uses compute resources to back out trajectories for visualization and therefore slows compute time. 
       # It is not suggested that this parameter is set to true during a deployed use, but is a useful debug instrument while tuning the system, 
       # but use sparingly. Visualizing 2000 batches @ 56 points at 30 hz is a lot.
-      visualize: true
+      visualize: false
       # 	Default false. Whether to regenerate noises each iteration or use single noise distribution computed on initialization and reset. 
       # Practically, this is found to work fine since the trajectories are being sampled stochastically from a normal distribution and 
-      # reduces compute jittering at run-time due to thread wake-ups to resample normal distribution.  
+      # reduces compute jittering at run-time due to thread wake-ups to resample normal distribution.
       regenerate_noises: true
       # Path Handler
       # Default: 1.5. Distance ahead of nearest point on path to robot to prune path to.
@@ -206,20 +271,20 @@ controller_server:
         min_turning_r: 0.5
       # Default: None. Critics (plugins) names
       critics: [
-        "ConstraintCritic", "CostCritic", "GoalCritic",
+        "ConstraintCritic", "ObstaclesCritic", "CostCritic", "GoalCritic",
         "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
         "PathAngleCritic", "PreferForwardCritic"]
       # ----------------------------------------------------------------------------------------------------
-      # This critic incentivizes navigating away from obstacles and critical collisions using either a circular
+      # This critic incentivize navigating away from obstacles and critical collisions using either a circular
       #  robot point-check or full SE2 footprint check using distances from obstacles.
       ObstaclesCritic:
         # Weight to apply to critic for near collisions closer than collision_margin_distance to prevent near collisions only 
         # as a method of virtually inflating the footprint. This should not be used to generally influence obstacle avoidance away from critical collisions.
-        critical_weight: 20 
+        critical_weight: 20.0
         # Weight to apply to critic for generally preferring routes in lower cost space. This is separated from the critical term to allow
         #  for fine tuning of obstacle behaviors with path alignment for dynamic scenes without impacting actions which may directly lead to near-collisions. 
         # This is applied within the inflation_radius distance from obstacles.
-        repulsion_weight: 1.5
+        repulsion_weight: 0.9
         # Power order to apply to term.
         cost_power: 1
         # Whether to use point cost (if robot is circular or low compute power) or compute SE2 footprint cost.
@@ -233,9 +298,9 @@ controller_server:
         # Distance (m) near goal to stop applying preferential obstacle term to allow robot to smoothly converge to goal pose in close proximity to obstacles
         near_goal_distance: 0.50
         # Exponential decay factor across inflation radius. This should be the same as for your inflation layer (Humble only)
-        cost_scaling_factor: 3.0
+        cost_scaling_factor: 2.5
         # Radius to inflate costmap around lethal obstacles. This should be the same as for your inflation layer (Humble only)
-        inflation_radius: 0.7
+        inflation_radius: 0.30
         # Name of the inflation layer. If empty, it uses the last inflation layer in the costmap. If you have multiple inflation layers, 
         # you may want to specify the name of the layer to use.'
         # inflation_layer_name: ""
@@ -248,7 +313,7 @@ controller_server:
         # Default 4.0. Weight to apply to critic term.
         cost_weight: 4.0
       # ----------------------------------------------------------------------------------------------------
-      # This critic incentivizes navigating spatially towards the goal when in reasonable proximity to goal
+      # This critic incentivize navigating spatially towards the goal when in reasonable proximity to goal
       GoalCritic:
         enabled: true
         # Default 1. Power order to apply to term.
@@ -259,7 +324,7 @@ controller_server:
         # It is wise to start with this as being the same as your prediction horizon to have a clean hand-off with the path follower critic.
         threshold_to_consider: 1.4
       # ----------------------------------------------------------------------------------------------------
-      # This critic incentivizes navigating to achieve the angle of the goal posewhen in reasonable proximity to goal
+      # This critic incentivize navigating to achieve the angle of the goal pose when in reasonable proximity to goal
       GoalAngleCritic:
         enabled: true
         # Default 1. Power order to apply to term.
@@ -267,12 +332,12 @@ controller_server:
         # Default 3.0. Weight to apply to critic term.
         cost_weight: 3.0
         # Default 0.5. Minimal distance between robot and goal above which angle goal cost considered.
-        # There is a correlation to the goal checker, becasue it might rotate to the target angle too aggressivly
+        # There is a correlation to the goal checker, because it might rotate to the target angle too aggressively
         # outside the    general_goal_checker:  xy_goal_tolerance: 0.25 distance when rotating parameter wz_std: 3.2
         # has high values. Setting this below tolerance
         threshold_to_consider: 0.2
       # ----------------------------------------------------------------------------------------------------
-      # This critic incentivizes moving in the forward direction, rather than reversing.
+      # This critic incentivize moving in the forward direction, rather than reversing.
       PreferForwardCritic:
         enabled: true
         # Power order to apply to term.
@@ -283,7 +348,7 @@ controller_server:
         threshold_to_consider: 0.5
       # ----------------------------------------------------------------------------------------------------
       # Uses inflated costmap cost directly to avoid obstacles
-      # This critic incentivizes navigating away from obstacles and critical collisions using either a circular robot point-check 
+      # This critic incentivize navigating away from obstacles and critical collisions using either a circular robot point-check 
       # or full SE2 footprint check using the costmap values.        
       CostCritic:
         enabled: true
@@ -291,11 +356,11 @@ controller_server:
         # Default 1. Power order to apply to term.
         cost_power: 1
         # Default 3.81. Wight to apply to critic to avoid obstacles.
-        cost_weight: 3.81
+        cost_weight: 1.5
         # Default 300.0. Cost to apply to a pose with any point in in inflated space to prefer distance from obstacles.
         critical_cost: 300.0
         # Default: False. Whether to use point cost (if robot is circular or low compute power) or compute SE2 footprint cost.
-        consider_footprint: true
+        consider_footprint: false
         # Default 1000000.0. Cost to apply to a true collision in a trajectory.
         collision_cost: 1000000.0
         # Default 0.5. Distance near goal to stop applying preferential obstacle term to allow robot to smoothly converge to goal
@@ -306,16 +371,16 @@ controller_server:
         # Default 2. Step of trajectory points to evaluate for costs since otherwise so dense represents multiple points for a single costmap cell.
         trajectory_point_step: 2
       # ----------------------------------------------------------------------------------------------------
-      # This critic incentivizes aligning with the global path, if relevant. It does not implement path following behavior.
+      # This critic incentivize aligning with the global path, if relevant. It does not implement path following behavior.
       PathAlignCritic:
         enabled: true
         # Power order to apply to term.
         cost_power: 1
         # Weight to apply to critic term.
-        cost_weight: 14.0
+        cost_weight: 9.0
         # Maximum proportion of the path that can be occupied before this critic is not considered to allow the obstacle and path follow critics
         # to avoid obstacles while following the path’s intent in presence of dynamic objects in the scene. Between 0-1 for 0-100%.
-        max_path_occupancy_ratio: 0.05
+        max_path_occupancy_ratio: 0.20
         # The step to take in trajectories for evaluating them in the critic. Since trajectories are extremely dense, its unnecessary 
         # to evaluate each point and computationally expensive.
         trajectory_point_step: 4
@@ -330,13 +395,13 @@ controller_server:
         # the controller sees fit, keep as false. If your plans do not contain orientation information (e.g. navfn), keep as false.
         use_path_orientations: false
       # ----------------------------------------------------------------------------------------------------
-      # This critic incentivizes making progress along the path. This is what drives the robot forward along the path.
+      # This critic incentivize making progress along the path. This is what drives the robot forward along the path.
       PathFollowCritic:
         enabled: true
         # Power order to apply to term.
         cost_power: 1
         # Weight to apply to critic term.
-        cost_weight: 5.0
+        cost_weight: 7.0
         # Number of path points after furthest one any trajectory achieves to drive path tracking relative to.
         offset_from_furthest: 5
         # Distance (m) between robot and goal to stop considering path following and allow goal critics to take over. It is wise to start with 
@@ -381,17 +446,17 @@ local_costmap:
       update_frequency: 5.0
       publish_frequency: 2.0
       global_frame: odom
-      robot_base_frame: "base_footprint"
+      robot_base_frame: "base_link"
       rolling_window: true
-      width: 3
-      height: 3
+      width: 4
+      height: 4
       resolution: 0.05
       robot_radius: 0.18
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.70
+        cost_scaling_factor: 2.5
+        inflation_radius: 0.30
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -408,10 +473,10 @@ local_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          raytrace_max_range: 8.0
+          raytrace_min_range: 0.01
+          obstacle_max_range: 4.5
+          obstacle_min_range: 0.01
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
@@ -439,17 +504,17 @@ global_costmap:
           clearing: True
           marking: True
           data_type: "LaserScan"
-          raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
-          obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          raytrace_max_range: 8.0
+          raytrace_min_range: 0.01
+          obstacle_max_range: 4.5
+          obstacle_min_range: 0.01
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.7
+        cost_scaling_factor: 2.5
+        inflation_radius: 0.30
       always_send_full_costmap: True
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
@@ -516,7 +581,7 @@ planner_server:
       #   Heuristic Expansion: A* uses a heuristic to guide its search, prioritizing nodes that are closer to the goal.
       #   Optimality: It also guarantees the shortest path, but only if the heuristic is admissible (never overestimates the cost to reach the goal).
       #   Speed: Generally faster than Dijkstra’s because it uses the heuristic to focus the search, reducing the number of nodes expanded.
-      #   Use Case: Ideal for scenarios where you need faster pathfinding and can use a heuristic to estimate the cost to the goal.      
+      #   Use Case: Ideal for scenarios where you need faster path finding and can use a heuristic to estimate the cost to the goal.      
       use_astar: false
       # Whether to allow planning in unknown space.
       allow_unknown: true
@@ -572,7 +637,7 @@ waypoint_follower:
       waypoint_pause_duration: 200
 
 # The nav2_velocity_smoother is a package containing a lifecycle-component node for smoothing velocities sent by Nav2 to robot controllers. 
-# The aim of this package is to implement velocity, acceleration, and deadband smoothing from Nav2 to reduce wear-and-tear on robot motors 
+# The aim of this package is to implement velocity, acceleration, and dead band smoothing from Nav2 to reduce wear-and-tear on robot motors 
 # and hardware controllers by smoothing out the accelerations/jerky movements that might be present with some local trajectory planners' control efforts.
 # It supports differential drive and omnidirectional robot platforms primarily, but is applicable to ackermann as well with some interpretations of Twist. 
 velocity_smoother:
@@ -583,7 +648,7 @@ velocity_smoother:
     feedback: "OPEN_LOOP"  # Type of feedback for current speed. Open loop uses the last smoothed output. Closed loop uses robot odometry
     max_velocity: [0.5, 0.5, 2.5]  # Maximum velocities, ordered [Vx, Vy, Vw]
     min_velocity: [-0.5, -0.5, -2.5]  # Minimum velocities, ordered [Vx, Vy, Vw]
-    deadband_velocity: [0.0, 0.0, 0.0]  # A deadband of velocities below which they should be zero-ed out for sending to the robot base controller, ordered [Vx, Vy, Vw]
+    deadband_velocity: [0.0, 0.0, 0.0]  # A dead band of velocities below which they should be zero-ed out for sending to the robot base controller, ordered [Vx, Vy, Vw]
     velocity_timeout: 1.0  # Time (s) after which if no new velocity commands are received to zero out and stop
     max_accel: [2.5, 2.5, 3.2]  # Maximum acceleration, ordered [Ax, Ay, Aw]
     max_decel: [-2.5, -2.5, -3.2]  # Maximum deceleration, ordered [Ax, Ay, Aw]
@@ -593,7 +658,7 @@ velocity_smoother:
 
 collision_monitor:
   ros__parameters:
-    base_frame_id: "base_footprint"
+    base_frame_id: "base_link"
     odom_frame_id: "odom"
     cmd_vel_in_topic: "cmd_vel_smoothed"
     cmd_vel_out_topic: "cmd_vel"
@@ -609,7 +674,7 @@ collision_monitor:
       type: "polygon"
       action_type: "approach"
       footprint_topic: "/local_costmap/published_footprint"
-      time_before_collision: 1.2
+      time_before_collision: 0.6
       simulation_time_step: 0.1
       min_points: 6
       visualize: False
@@ -670,7 +735,7 @@ docking_server:
 
 loopback_simulator:
   ros__parameters:
-    base_frame_id: "base_footprint"
+    base_frame_id: "base_link"
     odom_frame_id: "odom"
     map_frame_id: "map"
     scan_frame_id: "base_scan"  # tb4_loopback_simulator.launch.py remaps to 'rplidar_link'
