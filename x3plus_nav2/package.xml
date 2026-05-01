@@ -16,6 +16,7 @@
    <depend>robot_localization</depend>
    <depend>nav2_navigation</depend>   
    <depend>nav2_bringup</depend>
+  <exec_depend>slam_toolbox</exec_depend>
 
 
    <exec_depend>joint_state_publisher</exec_depend>
