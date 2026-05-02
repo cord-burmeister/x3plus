@@ -3,64 +3,279 @@
 
 slam_toolbox:
   ros__parameters:
+
+    # --- Solver ---
+    # solver_plugin: Nonlinear least-squares back-end used to optimise the pose graph.
+    #   Description: CeresSolver is the most robust and feature-rich option.
+    #   Impact:       Affects convergence speed and pose-graph accuracy.
+    #   Default:      solver_plugins::CeresSolver
+    #   Options:      solver_plugins::CeresSolver | solver_plugins::SpaSolver | solver_plugins::G2oSolver
     solver_plugin: solver_plugins::CeresSolver
+
+    # ceres_linear_solver: Linear algebra back-end used inside each Ceres iteration.
+    #   Description: SPARSE_NORMAL_CHOLESKY is fast and memory-efficient for sparse pose graphs.
+    #   Impact:       DENSE_QR is more accurate but slower; SPARSE_NORMAL_CHOLESKY is the practical default.
+    #   Default:      SPARSE_NORMAL_CHOLESKY
+    #   Options:      SPARSE_NORMAL_CHOLESKY | DENSE_QR | DENSE_NORMAL_CHOLESKY | CGNR | SPARSE_SCHUR | ITERATIVE_SCHUR
     ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+
+    # ceres_preconditioner: Preconditioner applied when using iterative linear solvers.
+    #   Description: SCHUR_JACOBI is efficient for structure-from-motion style graphs typical in SLAM.
+    #   Impact:       Better preconditioner → fewer CG iterations → faster solve.
+    #   Default:      SCHUR_JACOBI
+    #   Options:      IDENTITY | JACOBI | SCHUR_JACOBI | CLUSTER_JACOBI | CLUSTER_TRIDIAGONAL
     ceres_preconditioner: SCHUR_JACOBI
+
+    # ceres_trust_strategy: Strategy Ceres uses to control the step size during optimisation.
+    #   Description: LEVENBERG_MARQUARDT is more stable in early iterations; DOGLEG can be faster when near optimum.
+    #   Impact:       Affects convergence stability and speed.
+    #   Default:      LEVENBERG_MARQUARDT
+    #   Options:      LEVENBERG_MARQUARDT | DOGLEG
     ceres_trust_strategy: LEVENBERG_MARQUARDT
+
+    # ceres_dogleg_type: Sub-type used when trust strategy is DOGLEG.
+    #   Description: TRADITIONAL_DOGLEG is simpler; SUBSPACE_DOGLEG can be more accurate.
+    #   Impact:       Only active when ceres_trust_strategy: DOGLEG.
+    #   Default:      TRADITIONAL_DOGLEG
+    #   Options:      TRADITIONAL_DOGLEG | SUBSPACE_DOGLEG
     ceres_dogleg_type: TRADITIONAL_DOGLEG
+
+    # ceres_loss_function: Robust kernel applied to residuals to reduce influence of outlier matches.
+    #   Description: None means standard L2 (least squares). Huber or Cauchy reduce outlier sensitivity.
+    #   Impact:       Robust kernels improve map quality in noisy or dynamic environments at a small speed cost.
+    #   Default:      None
+    #   Options:      None | HuberLoss | CauchyLoss
     ceres_loss_function: None
 
+    # --- Frames & Topics ---
+    # odom_frame: TF frame published by the odometry source.
+    #   Default: odom
     odom_frame: odom
+
+    # map_frame: TF frame of the SLAM-generated map.
+    #   Default: map
     map_frame: map
+
+    # base_frame: TF frame of the robot footprint / base.
+    #   Default: base_link
     base_frame: base_link
+
+    # scan_topic: Laser scan topic to subscribe to.
+    #   Default: /scan
     scan_topic: /scan
+
+    # mode: Operating mode of slam_toolbox.
+    #   Description: mapping builds a new map; localization localises on an existing map; lifelong continues updating a saved map.
+    #   Default:      mapping
+    #   Options:      mapping | localization | lifelong
     mode: mapping
 
+    # --- General ---
+    # debug_logging: Enable verbose debug output.
+    #   Impact:  High log volume, for development only.
+    #   Default: false | Range: true / false
     debug_logging: false
+
+    # throttle_scans: Process every Nth scan (1 = every scan).
+    #   Description: Reduces CPU load at the cost of fewer scan nodes.
+    #   Impact:  Higher value → fewer nodes, coarser map; lower → richer map but more CPU.
+    #   Default: 1 | Range: 1–10 (integer)
     throttle_scans: 1
+
+    # transform_publish_period: Interval (s) at which the map→odom TF is re-published.
+    #   Impact:  Too large causes TF stuttering in navigation; too small wastes CPU.
+    #   Default: 0.02 | Range: 0.01–0.1
     transform_publish_period: 0.02
+
+    # map_update_interval: Interval (s) at which the occupancy-grid map is regenerated for visualisation / nav.
+    #   Impact:  Lower = map consumers (Nav2 costmaps, RViz) see updates sooner; higher = less CPU.
+    #            Does NOT affect how often scan nodes are added to the pose graph.
+    #   Default: 5.0 | Range: 0.5–10.0
     map_update_interval: 2.0
+
+    # resolution: Cell size (m) of the 2-D occupancy map.
+    #   Impact:  Lower = sharper walls and features; higher = coarser but faster rasterisation and smaller map.
+    #            Reducing below the sensor noise floor gives no further benefit.
+    #   Default: 0.05 | Range: 0.02–0.10
     resolution: 0.05
-    # Why this helps: your previous config was very aggressive, so SLAM was updating often and using long-range returns that are usually the noisiest in corridors and larger rooms. 
-    # That creates bad loop closures and scan links over time. These changes make slam_toolbox add fewer, higher-quality constraints.
+
+    # max_laser_range: Maximum range (m) of laser returns used for scan matching and map rasterisation.
+    #   Description: Clips long-range returns that are typically noisiest. Should stay at or below the sensor's reliable range.
+    #   Impact:  Lower = fewer noisy constraints and sharper near-field walls; higher = more coverage but weaker matches.
+    #   Default: 25.0 | Range: 2.0–30.0 (must not exceed sensor max)
     max_laser_range: 12.0
+
+    # minimum_time_interval: Minimum time (s) that must pass before a new scan is accepted.
+    #   Description: Throttles scan intake regardless of motion. Useful to cap CPU when the sensor publishes faster than needed.
+    #   Impact:  Lower = more scans processed, better map density; higher = fewer scans, lower CPU.
+    #   Default: 0.5 | Range: 0.0–2.0
     minimum_time_interval: 0.3
+
+    # transform_timeout: How long (s) to wait for a TF transform before giving up.
+    #   Impact:  Too low → dropped scans on a busy system; too high → latency.
+    #   Default: 0.2 | Range: 0.05–1.0
     transform_timeout: 0.2
+
+    # tf_buffer_duration: Size (s) of the TF history buffer.
+    #   Impact:  Must be larger than the maximum expected TF lookup age. Larger values use more memory.
+    #   Default: 30.0 | Range: 5.0–120.0
     tf_buffer_duration: 30.
+
+    # stack_size_to_use: Thread stack size (bytes) allocated for the solver.
+    #   Impact:  Increase if you see stack-overflow crashes with large maps. 40 MB is sufficient for most use cases.
+    #   Default: 40000000 | Range: 10000000–80000000
     stack_size_to_use: 40000000
+
+    # enable_interactive_mode: Expose the interactive map manipulation service.
+    #   Impact:  Allows manual loop-closure corrections via RViz plugin; small constant overhead.
+    #   Default: false | Range: true / false
     enable_interactive_mode: true
 
+    # --- Scan Matching ---
+    # use_scan_matching: Use ICP/scan-correlation matching to refine odometric pose before adding a node.
+    #   Impact:  true = much better map consistency; false = relies solely on odometry (not recommended).
+    #   Default: true | Range: true / false
     use_scan_matching: true
+
+    # use_scan_barycenter: Place the scan node at the centroid of the scan points rather than the sensor origin.
+    #   Impact:  Slightly more robust node placement in open areas.
+    #   Default: true | Range: true / false
     use_scan_barycenter: true
+
+    # minimum_travel_distance: Minimum linear distance (m) the robot must travel before a new scan node is created.
+    #   Impact:  Lower = denser pose graph and more accurate maps; higher = fewer nodes and lower CPU.
+    #   Default: 0.5 | Range: 0.05–1.0
     minimum_travel_distance: 0.35
+
+    # minimum_travel_heading: Minimum angular change (rad) before a new scan node is created.
+    #   Impact:  Lower = captures rotation more accurately; higher = fewer nodes on turning motions.
+    #   Default: 0.5 | Range: 0.05–1.0
     minimum_travel_heading: 0.35
+
+    # scan_buffer_size: Number of recent scans kept in the local chain used for scan matching.
+    #   Impact:  Larger buffer = better local match quality and loop-closure context; higher memory use.
+    #   Default: 10 | Range: 5–50
     scan_buffer_size: 10
+
+    # scan_buffer_maximum_scan_distance: Discard buffered scans farther than this distance (m) from the current position.
+    #   Impact:  Keeps the buffer spatially local; should align with max_laser_range.
+    #   Default: 10.0 | Range: 1.0–30.0
     scan_buffer_maximum_scan_distance: 12.0
+
+    # link_match_minimum_response_fine: Minimum correlation score (0–1) for the fine-resolution scan matcher to accept a link.
+    #   Impact:  Higher = fewer but more reliable links; lower = more links but risk of false associations.
+    #            Increase first when you see ghosting or doubled walls.
+    #   Default: 0.1 | Range: 0.0–1.0
     link_match_minimum_response_fine: 0.1
+
+    # link_scan_maximum_distance: Maximum distance (m) between two nodes to attempt linking.
+    #   Impact:  Lower = only close, well-overlapping scans are linked (more reliable); higher = longer-range links (more constraints, higher risk).
+    #   Default: 1.5 | Range: 0.5–5.0
     link_scan_maximum_distance: 1.5
+
+    # --- Loop Closure ---
+    # loop_search_maximum_distance: Radius (m) around the current pose to search for loop-closure candidates.
+    #   Impact:  Larger = more closure opportunities; smaller = less CPU and fewer false positives.
+    #   Default: 3.0 | Range: 1.0–15.0
     loop_search_maximum_distance: 3.0
+
+    # do_loop_closing: Enable loop closure detection and correction.
+    #   Impact:  true = corrects accumulated drift; false = open-loop SLAM (map drifts over time).
+    #   Default: true | Range: true / false
     do_loop_closing: true
+
+    # loop_match_minimum_chain_size: Minimum number of consecutive nodes that must agree before a loop is closed.
+    #   Impact:  Higher = fewer false loop closures; lower = more agressive loop closing with higher false-positive risk.
+    #   Default: 10 | Range: 3–20 (integer)
     loop_match_minimum_chain_size: 10
+
+    # loop_match_maximum_variance_coarse: Maximum covariance allowed for the coarse loop candidate to pass to fine matching.
+    #   Impact:  Higher = looser pre-filter (more candidates reach fine stage); lower = stricter.
+    #   Default: 3.0 | Range: 0.1–9.0
     loop_match_maximum_variance_coarse: 3.0
+
+    # loop_match_minimum_response_coarse: Minimum score (0–1) for the coarse-stage loop candidate to be promoted to fine matching.
+    #   Impact:  Higher = stricter candidate filtering, fewer false loop closures; lower = more permissive.
+    #   Default: 0.35 | Range: 0.0–1.0
     loop_match_minimum_response_coarse: 0.35
+
+    # loop_match_minimum_response_fine: Minimum score (0–1) for the fine-stage loop closure to be accepted into the pose graph.
+    #   Impact:  Higher = only high-confidence closures are accepted; lower = more closures but risk of bad corrections.
+    #            Increase when you see sudden map jumps.
+    #   Default: 0.45 | Range: 0.0–1.0
     loop_match_minimum_response_fine: 0.45
 
+    # --- Correlation Search Space (scan-to-scan matching) ---
+    # correlation_search_space_dimension: Side length (m) of the search grid used during scan correlation.
+    #   Impact:  Larger covers more odometry error but is slower; smaller is faster but may miss the true match.
+    #   Default: 0.5 | Range: 0.1–2.0
     correlation_search_space_dimension: 0.5
+
+    # correlation_search_space_resolution: Grid cell size (m) of the correlation search space.
+    #   Impact:  Finer = more accurate position estimate; coarser = faster. Should be ≤ map resolution.
+    #   Default: 0.01 | Range: 0.005–0.05
     correlation_search_space_resolution: 0.01
+
+    # correlation_search_space_smear_deviation: Gaussian smear (m) applied to scan points before correlation.
+    #   Impact:  Higher = more forgiving to small misalignments but blurs map; lower = sharper matching.
+    #   Default: 0.1 | Range: 0.01–0.3
     correlation_search_space_smear_deviation: 0.1
 
+    # --- Loop Search Space ---
+    # loop_search_space_dimension: Side length (m) of the search grid used during loop-closure scan matching.
+    #   Impact:  Larger handles bigger positional uncertainty at loop detection; slower.
+    #   Default: 8.0 | Range: 2.0–20.0
     loop_search_space_dimension: 8.0
+
+    # loop_search_space_resolution: Grid cell size (m) of the loop-closure search space.
+    #   Impact:  Finer = more accurate loop alignment; coarser = faster.
+    #   Default: 0.05 | Range: 0.01–0.1
     loop_search_space_resolution: 0.05
+
+    # loop_search_space_smear_deviation: Gaussian smear (m) applied during loop-closure scan matching.
+    #   Impact:  Higher = more tolerant of partial overlaps; lower = sharper loop constraints.
+    #   Default: 0.03 | Range: 0.005–0.1
     loop_search_space_smear_deviation: 0.03
 
+    # --- Penalty / Cost Tuning ---
+    # distance_variance_penalty: Weight applied to distance uncertainty in the pose-graph cost.
+    #   Impact:  Higher = constraints with large translational uncertainty are penalised more strongly.
+    #   Default: 0.5 | Range: 0.1–2.0
     distance_variance_penalty: 0.5
+
+    # angle_variance_penalty: Weight applied to angular uncertainty in the pose-graph cost.
+    #   Impact:  Higher = angular errors are penalised more; useful when rotation is the dominant error source.
+    #   Default: 1.0 | Range: 0.1–5.0
     angle_variance_penalty: 1.0
 
+    # fine_search_angle_offset: Half-range (rad) of the angular search during fine scan matching.
+    #   Impact:  Smaller = faster but may miss true rotation if odometry heading is poor.
+    #   Default: 0.00349 (~0.2°) | Range: 0.00175–0.01745
     fine_search_angle_offset: 0.00349
+
+    # coarse_search_angle_offset: Half-range (rad) of the angular search during coarse scan matching.
+    #   Impact:  Larger = handles more heading uncertainty; smaller = faster.
+    #   Default: 0.349 (~20°) | Range: 0.1–0.785
     coarse_search_angle_offset: 0.349
+
+    # coarse_angle_resolution: Angular step size (rad) used in the coarse angular search.
+    #   Impact:  Smaller = finer angular search, better accuracy but slower; larger = faster but coarser.
+    #   Default: 0.0349 (~2°) | Range: 0.00873–0.0698
     coarse_angle_resolution: 0.0349
+
+    # minimum_angle_penalty: Minimum multiplicative penalty applied for angular deviation (0–1).
+    #   Impact:  Prevents the solver from completely ignoring angular constraints even at small angles.
+    #   Default: 0.9 | Range: 0.0–1.0
     minimum_angle_penalty: 0.9
+
+    # minimum_distance_penalty: Minimum multiplicative penalty applied for translational deviation (0–1).
+    #   Impact:  Floor on the distance penalty; prevents very close scans from being weighted too loosely.
+    #   Default: 0.5 | Range: 0.0–1.0
     minimum_distance_penalty: 0.5
+
+    # use_response_expansion: Expand the search space when the initial correlation response is low.
+    #   Impact:  true = more robust recovery from poor initial estimates; slight extra CPU cost.
+    #   Default: true | Range: true / false
     use_response_expansion: true
 
 amcl:
@@ -121,56 +336,125 @@ amcl:
 
 bt_navigator:
   ros__parameters:
+
+    # --- General ---
+    # use_sim_time: Use simulation clock.
+    #   Default: false | Range: true / false
     use_sim_time: True
+
+    # global_frame: The global fixed frame for navigation.
+    #   Default: map
     global_frame: map
+
+    # robot_base_frame: The robot base TF frame.
+    #   Default: base_link
     robot_base_frame: base_link
+
+    # odom_topic: Odometry topic used by the BT navigator for velocity context.
+    #   Default: odom
     odom_topic: "/odometry/filtered"
+
+    # --- Timing ---
+    # bt_loop_duration: Duration (ms) of each Behaviour Tree tick loop.
+    #   Impact:  Lower = more responsive navigation decisions; higher = lower CPU.
+    #   Default: 10 | Range: 5–100 (integer ms)
     bt_loop_duration: 10
+
+    # default_server_timeout: Default timeout (ms) for action server responses within BTs.
+    #   Impact:  Increase if planning or control servers are slow to respond on first call.
+    #   Default: 20 | Range: 10–1000 (integer ms)
     default_server_timeout: 20
+
+    # wait_for_service_timeout: Timeout (ms) to wait for action/service servers at startup.
+    #   Impact:  Increase on slow systems to prevent premature startup failure.
+    #   Default: 1000 | Range: 100–30000 (integer ms)
     wait_for_service_timeout: 1000
+
+    # action_server_result_timeout: Timeout (s) to wait for a navigation action result before failing.
+    #   Impact:  Increase for very long navigation tasks in large environments.
+    #   Default: 900.0 | Range: 10.0–3600.0
     action_server_result_timeout: 900.0
+
+    # navigators: List of navigator plugins to load.
+    #   Default: ["navigate_to_pose", "navigate_through_poses"]
     navigators: ["navigate_to_pose", "navigate_through_poses"]
     navigate_to_pose:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
     navigate_through_poses:
       plugin: "nav2_bt_navigator::NavigateThroughPosesNavigator"
-    # 'default_nav_through_poses_bt_xml' and 'default_nav_to_pose_bt_xml' are use defaults:
-    # nav2_bt_navigator/navigate_to_pose_w_replanning_and_recovery.xml
-    # nav2_bt_navigator/navigate_through_poses_w_replanning_and_recovery.xml
-    # They can be set here or via a RewrittenYaml remap from a parent launch file to Nav2.
 
-    # plugin_lib_names is used to add custom BT plugins to the executor (vector of strings).
-    # Built-in plugins are added automatically
-    # plugin_lib_names: []
+    # Default BT XMLs are navigate_to_pose_w_replanning_and_recovery and
+    # navigate_through_poses_w_replanning_and_recovery. Override via
+    # 'default_nav_to_pose_bt_xml' / 'default_nav_through_poses_bt_xml' params
+    # or via a RewrittenYaml remap from a parent launch file.
 
+    # error_code_names: Action server error codes to propagate for diagnostics.
     error_code_names:
       - compute_path_error_code
       - follow_path_error_code
 
 controller_server:
   ros__parameters:
+
+    # --- General ---
+    # use_sim_time: Use simulation clock.
+    #   Default: false | Range: true / false
     use_sim_time: True
+
+    # controller_frequency: Rate (Hz) at which the controller server runs.
+    #   Impact:  Higher = smoother control; higher CPU. Should equal 1 / model_dt in MPPI.
+    #   Default: 20.0 | Range: 5.0–50.0
     controller_frequency: 20.0
+
+    # costmap_update_timeout: Maximum time (s) to wait for a fresh costmap before aborting control.
+    #   Impact:  Increase on slow systems; decrease for tighter real-time response.
+    #   Default: 0.30 | Range: 0.1–1.0
     costmap_update_timeout: 0.30
+
+    # min_x/y/theta_velocity_threshold: Velocities below these values (m/s or rad/s) are treated as zero.
+    #   Impact:  Prevents noisy near-zero velocities from triggering unnecessary control actions.
+    #            Set near encoder resolution or odometry noise floor.
+    #   Default: 0.001 | Range: 0.0–0.1
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
+
+    # failure_tolerance: Number of consecutive controller failures tolerated before declaring failure.
+    #   Impact:  Higher = more lenient; lower = faster failure detection and recovery trigger.
+    #   Default: 0.3 | Range: 0.0–5.0
     failure_tolerance: 0.3
+
+    # progress_checker_plugins: List of progress checker plugin names to load.
     progress_checker_plugins: ["progress_checker"]
-    goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
+
+    # goal_checker_plugins: List of goal checker plugin names to load.
+    goal_checker_plugins: ["general_goal_checker"]
+
+    # controller_plugins: List of controller plugins (one per named path follower).
     controller_plugins: ["FollowPath"]
+
+    # use_realtime_priority: Elevate the controller thread to real-time OS scheduling priority.
+    #   Impact:  Reduces control jitter on real hardware; requires SCHED_FIFO OS permissions.
+    #   Default: false | Range: true / false
     use_realtime_priority: false
+
+    # odom_topic: Odometry topic the controller server uses for velocity feedback.
     odom_topic: "/odometry/filtered"
 
 
-    # Progress checker parameters
+    # --- Progress Checker ---
     progress_checker:
       plugin: "nav2_controller::SimpleProgressChecker"
-      # The minimum distance (in meters) that the robot must move to be considered making progress. The default value is 0.5 meters
+      # required_movement_radius: Minimum distance (m) the robot must move within movement_time_allowance to be considered making progress.
+      #   Impact:  Too high = premature failure on slow robots or tight spaces; too low = misses stuck condition.
+      #   Default: 0.5 | Range: 0.05–1.0
       required_movement_radius: 0.15
-      # The maximum time (in seconds) allowed for the robot to move the required distance. The default value is 10 seconds1.
+      # movement_time_allowance: Time window (s) in which required_movement_radius must be achieved.
+      #   Impact:  Increase for slow robots or high-latency planners.
+      #   Default: 10.0 | Range: 5.0–60.0
       movement_time_allowance: 20.0
-    # Goal checker parameters
+
+    # --- Goal Checker ---
     #precise_goal_checker:
     #  plugin: "nav2_controller::SimpleGoalChecker"
     #  xy_goal_tolerance: 0.25
@@ -179,7 +463,13 @@ controller_server:
     general_goal_checker:
       stateful: True
       plugin: "nav2_controller::SimpleGoalChecker"
+      # xy_goal_tolerance: Cartesian distance (m) from goal position to consider it reached.
+      #   Impact:  Lower = more precise stopping; higher = allows robot to stop slightly early.
+      #   Default: 0.25 | Range: 0.05–0.5
       xy_goal_tolerance: 0.25
+      # yaw_goal_tolerance: Angular tolerance (rad) from goal heading to consider it reached.
+      #   Impact:  Lower = stricter heading alignment at goal; higher = any orientation accepted.
+      #   Default: 0.25 | Range: 0.05–3.14
       yaw_goal_tolerance: 0.25
     # The most common parameters you might want to start off changing are the velocity profiles (vx_max, vx_min, wz_max, and vy_max if holonomic) 
     # and the motion_model to correspond to your vehicle. Its wise to consider the prune_distance of the path plan in proportion to your maximum 
