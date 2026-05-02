@@ -10,7 +10,7 @@
     visualize: true
     # Rate in Hz at which new frontiers will computed and goal reconsidered.
     # default = `1.0`
-    planner_frequency: 0.5
+    planner_frequency: 0.2
     # Time in seconds. When robot do not make any progress for `progress_timeout`, current goal will be abandoned.
     # default = `30.0`
     progress_timeout: 320.0
@@ -19,23 +19,23 @@
     # default = `1e-3` 5.0
     # potential_scale: 0.0001
     #potential_scale: 0.1
-    potential_scale: 1.0
+    potential_scale: 2.0
     # Used for weighting frontiers. This multiplicative parameter affects frontier orientation component of the frontier weight. 
     # This parameter does currently nothing and is provided solely for forward compatibility.
     # default = `0`
     orientation_scale: 1.0
     # Treat frontier goals within this distance as the same goal to avoid
     # rapid retargeting when frontier centroids jitter with map updates.
-    goal_aliasing_distance: 0.30
+    goal_aliasing_distance: 1.0
     # Used for weighting frontiers. This multiplicative parameter affects frontier gain component of 
     # the frontier weight (frontier size).
     # default = `1.0`
-    gain_scale: 1.0
+    gain_scale: 0.5
     # Transform tolerance to use when transforming robot pose.
     # default = `0.3`
     transform_tolerance: 0.3
     # Minimum size of the frontier to consider the frontier as the exploration goal. In meters.
     # default = `0.5`
-    min_frontier_size: 0.02
+    min_frontier_size: 0.20
     return_to_init: false
 
