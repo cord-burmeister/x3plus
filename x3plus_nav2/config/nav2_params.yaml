@@ -356,8 +356,8 @@ local_costmap:
         # the robot needs at least 2 × (robot_radius + inflation_radius) of clearance 
 
         # cost_scaling_factor: 3.0
-        cost_scaling_factor: 2.5
-        inflation_radius: 0.28 # The radius in meters to which the map inflates obstacle cost values
+        cost_scaling_factor: 4.0
+        inflation_radius: 0.20 # Reduced for narrow doorway traversal; tune back up if clearance feels too tight
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -521,9 +521,9 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # Exponential decay factor across inflation radius.
-        cost_scaling_factor: 2.5
+        cost_scaling_factor: 4.0
         # Radius to inflate costmap around lethal obstacles.
-        inflation_radius: 0.28
+        inflation_radius: 0.20
         # Whether to inflate unknown cells as if lethal.
         # inflate_unknown: false
         # Whether to inflate unknown cells.
