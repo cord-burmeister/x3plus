@@ -19,18 +19,22 @@
     # default = `1e-3` 5.0
     # potential_scale: 0.0001
     #potential_scale: 0.1
-    potential_scale: 2.0
+    # Higher value = stronger distance penalty = prefer nearby frontiers
+    potential_scale: 5.0
     # Used for weighting frontiers. This multiplicative parameter affects frontier orientation component of the frontier weight. 
     # This parameter does currently nothing and is provided solely for forward compatibility.
     # default = `0`
     orientation_scale: 1.0
     # Treat frontier goals within this distance as the same goal to avoid
     # rapid retargeting when frontier centroids jitter with map updates.
-    goal_aliasing_distance: 1.0
+
+    # Larger value = stickier goal selection; robot won't switch unless a frontier is truly far from current target.
+    goal_aliasing_distance: 2.5
     # Used for weighting frontiers. This multiplicative parameter affects frontier gain component of 
     # the frontier weight (frontier size).
     # default = `1.0`
-    gain_scale: 0.5
+    # Lower value = frontier size matters less, so nearby small frontiers can still win
+    gain_scale: 0.05
     # Transform tolerance to use when transforming robot pose.
     # default = `0.3`
     transform_tolerance: 0.3
