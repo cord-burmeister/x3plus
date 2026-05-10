@@ -422,7 +422,7 @@ controller_server:
     # failure_tolerance: Number of consecutive controller failures tolerated before declaring failure.
     #   Impact:  Higher = more lenient; lower = faster failure detection and recovery trigger.
     #   Default: 0.3 | Range: 0.0–5.0
-    failure_tolerance: 0.3
+    failure_tolerance: 1.0
 
     # progress_checker_plugins: List of progress checker plugin names to load.
     progress_checker_plugins: ["progress_checker"]
@@ -448,7 +448,7 @@ controller_server:
       # required_movement_radius: Minimum distance (m) the robot must move within movement_time_allowance to be considered making progress.
       #   Impact:  Too high = premature failure on slow robots or tight spaces; too low = misses stuck condition.
       #   Default: 0.5 | Range: 0.05–1.0
-      required_movement_radius: 0.15
+      required_movement_radius: 0.10
       # movement_time_allowance: Time window (s) in which required_movement_radius must be achieved.
       #   Impact:  Increase for slow robots or high-latency planners.
       #   Default: 10.0 | Range: 5.0–60.0
@@ -466,7 +466,7 @@ controller_server:
       # xy_goal_tolerance: Cartesian distance (m) from goal position to consider it reached.
       #   Impact:  Lower = more precise stopping; higher = allows robot to stop slightly early.
       #   Default: 0.25 | Range: 0.05–0.5
-      xy_goal_tolerance: 0.25
+      xy_goal_tolerance: 0.3
       # yaw_goal_tolerance: Angular tolerance (rad) from goal heading to consider it reached.
       #   Impact:  Lower = stricter heading alignment at goal; higher = any orientation accepted.
       #   Default: 0.25 | Range: 0.05–3.14
@@ -535,7 +535,8 @@ controller_server:
       # Visualization of the trajectories using visualize uses compute resources to back out trajectories for visualization and therefore slows compute time. 
       # It is not suggested that this parameter is set to true during a deployed use, but is a useful debug instrument while tuning the system, 
       # but use sparingly. Visualizing 2000 batches @ 56 points at 30 hz is a lot.
-      visualize: false
+      # @open
+      visualize: true 
       # 	Default false. Whether to regenerate noises each iteration or use single noise distribution computed on initialization and reset. 
       # Practically, this is found to work fine since the trajectories are being sampled stochastically from a normal distribution and 
       # reduces compute jittering at run-time due to thread wake-ups to resample normal distribution.
@@ -574,23 +575,25 @@ controller_server:
         # Weight to apply to critic for generally preferring routes in lower cost space. This is separated from the critical term to allow
         #  for fine tuning of obstacle behaviors with path alignment for dynamic scenes without impacting actions which may directly lead to near-collisions. 
         # This is applied within the inflation_radius distance from obstacles.
-        repulsion_weight: 0.9
+        # Increased for stronger wall avoidance at 0.3m clearance
+        repulsion_weight: 1.0
         # Power order to apply to term.
         cost_power: 1
         # Whether to use point cost (if robot is circular or low compute power) or compute SE2 footprint cost.
-        consider_footprint: false
+        consider_footprint: true
         # Cost to apply to a true collision in a trajectory.
         collision_cost: 100000.0
         # Margin distance (m) from collision to apply severe penalty, similar to footprint inflation. Between 0.05-0.2 is reasonable. 
         # Note that it will highly influence the controller not to enter spaces more confined than this, so ensure this parameter 
         # is set lower than the narrowest you expect the robot to need to traverse through.
-        collision_margin_distance: 0.10
+        collision_margin_distance: 0.08
         # Distance (m) near goal to stop applying preferential obstacle term to allow robot to smoothly converge to goal pose in close proximity to obstacles
-        near_goal_distance: 0.50
+        near_goal_distance: 0.70
         # Exponential decay factor across inflation radius. This should be the same as for your inflation layer (Humble only)
-        cost_scaling_factor: 2.5
+        cost_scaling_factor: 3.0
         # Radius to inflate costmap around lethal obstacles. This should be the same as for your inflation layer (Humble only)
-        inflation_radius: 0.30
+        # Set to 0.3m for desired wall clearance
+        inflation_radius: 0.3
         # Name of the inflation layer. If empty, it uses the last inflation layer in the costmap. If you have multiple inflation layers, 
         # you may want to specify the name of the layer to use.'
         # inflation_layer_name: ""
@@ -646,11 +649,11 @@ controller_server:
         # Default 1. Power order to apply to term.
         cost_power: 1
         # Default 3.81. Wight to apply to critic to avoid obstacles.
-        cost_weight: 1.5
+        cost_weight: 1.0
         # Default 300.0. Cost to apply to a pose with any point in in inflated space to prefer distance from obstacles.
         critical_cost: 300.0
         # Default: False. Whether to use point cost (if robot is circular or low compute power) or compute SE2 footprint cost.
-        consider_footprint: false
+        consider_footprint: true
         # Default 1000000.0. Cost to apply to a true collision in a trajectory.
         collision_cost: 1000000.0
         # Default 0.5. Distance near goal to stop applying preferential obstacle term to allow robot to smoothly converge to goal
@@ -667,10 +670,10 @@ controller_server:
         # Power order to apply to term.
         cost_power: 1
         # Weight to apply to critic term.
-        cost_weight: 9.0
+        cost_weight: 3.0
         # Maximum proportion of the path that can be occupied before this critic is not considered to allow the obstacle and path follow critics
         # to avoid obstacles while following the path’s intent in presence of dynamic objects in the scene. Between 0-1 for 0-100%.
-        max_path_occupancy_ratio: 0.20
+        max_path_occupancy_ratio: 0.35
         # The step to take in trajectories for evaluating them in the critic. Since trajectories are extremely dense, its unnecessary 
         # to evaluate each point and computationally expensive.
         trajectory_point_step: 4
@@ -691,7 +694,7 @@ controller_server:
         # Power order to apply to term.
         cost_power: 1
         # Weight to apply to critic term.
-        cost_weight: 7.0
+        cost_weight: 8.0
         # Number of path points after furthest one any trajectory achieves to drive path tracking relative to.
         offset_from_furthest: 5
         # Distance (m) between robot and goal to stop considering path following and allow goal critics to take over. It is wise to start with 
@@ -741,12 +744,12 @@ local_costmap:
       width: 4
       height: 4
       resolution: 0.05
-      robot_radius: 0.18
+      footprint: "[[0.16, -0.13], [0.16, 0.13], [-0.16, 0.13], [-0.16, -0.13]]"
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
-        plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 2.5
-        inflation_radius: 0.30
+          plugin: "nav2_costmap_2d::InflationLayer"
+          cost_scaling_factor: 3.0
+          inflation_radius: 0.3
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -780,7 +783,7 @@ global_costmap:
       publish_frequency: 1.0
       global_frame: map
       robot_base_frame: base_link
-      robot_radius: 0.18
+      footprint: "[[0.16, -0.13], [0.16, 0.13], [-0.16, 0.13], [-0.16, -0.13]]"
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
@@ -803,8 +806,8 @@ global_costmap:
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 2.5
-        inflation_radius: 0.30
+        cost_scaling_factor: 4.0
+        inflation_radius: 0.5
       always_send_full_costmap: True
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
@@ -852,27 +855,19 @@ planner_server:
     use_sim_time: True
     planner_plugins: ["GridBased"]
     GridBased:
-      # The NavfnPlanner is a global planner plugin for the Nav2 Planner server. It implements the Navigation Function planner
-      # with either A* or Dij. expansions. It is largely equivalent to its counterpart in ROS 1 Navigation. 
-      # The Navfn planner assumes a circular robot (or a robot that can be approximated as circular for the purposes 
-      # of global path planning) and operates on a weighted costmap.
-      plugin: "nav2_navfn_planner/NavfnPlanner" # In Iron and older versions, "/" was used instead of "::"
+      # Smac 2D global planner for circular differential/omni robots.
+      plugin: "nav2_smac_planner/SmacPlanner2D"
       # Tolerance in meters between requested goal pose and end of path.
       tolerance: 1.0
-      # Whether to use A*. If false, uses Dijkstra’s expansion.
-      # The Navfn Planner plugin in ROS (Robot Operating System) can use either the Dijkstra or A* algorithm for path planning. 
-      # Here’s a brief overview of the differences between these two algorithms:
-      # Dijkstra’s Algorithm
-      #   Wavefront Expansion: Dijkstra’s algorithm expands nodes in all directions uniformly, creating a wavefront from the start node.
-      #   Optimality: It guarantees finding the shortest path in terms of cost from the start to the goal node.
-      #   Speed: It can be slower because it explores all possible paths to ensure the shortest one is found.
-      #   Use Case: Best for scenarios where the cost of traversing each edge is the same or when you need the absolute shortest path.
-      # A* Algorithm
-      #   Heuristic Expansion: A* uses a heuristic to guide its search, prioritizing nodes that are closer to the goal.
-      #   Optimality: It also guarantees the shortest path, but only if the heuristic is admissible (never overestimates the cost to reach the goal).
-      #   Speed: Generally faster than Dijkstra’s because it uses the heuristic to focus the search, reducing the number of nodes expanded.
-      #   Use Case: Ideal for scenarios where you need faster path finding and can use a heuristic to estimate the cost to the goal.      
-      use_astar: false
+      # Keep full-resolution planning for tighter indoor path quality.
+      downsample_costmap: false
+      downsampling_factor: 1
+      # Stop conditions for planning loop.
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      terminal_checking_interval: 5000
+      # Higher values bias the global path toward lower-cost center space in corridors/corners.
+      cost_travel_multiplier: 4.0
       # Whether to allow planning in unknown space.
       allow_unknown: true
 
