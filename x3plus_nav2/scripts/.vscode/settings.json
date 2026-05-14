@@ -1,0 +1,25 @@
+{
+    "ROS2.distro": "humble",
+    "python.autoComplete.extraPaths": [
+        "/home/marvin/x3plus_ws/install/ros_ign_interfaces/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/ros_gz_interfaces/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/roadmap_explorer_msgs/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/greenwave_monitor/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/greenwave_monitor_interfaces/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/frontier_exploration_ros2/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/explore_lite_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ],
+    "python.analysis.extraPaths": [
+        "/home/marvin/x3plus_ws/install/ros_ign_interfaces/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/ros_gz_interfaces/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/roadmap_explorer_msgs/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/greenwave_monitor/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/greenwave_monitor_interfaces/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/frontier_exploration_ros2/local/lib/python3.10/dist-packages",
+        "/home/marvin/x3plus_ws/install/explore_lite_msgs/local/lib/python3.10/dist-packages",
+        "/opt/ros/humble/lib/python3.10/site-packages",
+        "/opt/ros/humble/local/lib/python3.10/dist-packages"
+    ]
+}
