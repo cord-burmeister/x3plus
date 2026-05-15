@@ -10,7 +10,7 @@
     visualize: true
     # Rate in Hz at which new frontiers will computed and goal reconsidered.
     # default = `1.0`
-    planner_frequency: 0.7
+    planner_frequency: 1.0
     # Time in seconds. When robot do not make any progress for `progress_timeout`, current goal will be abandoned.
     # default = `30.0`
     progress_timeout: 340.0
@@ -45,6 +45,6 @@
     transform_tolerance: 0.3
     # Minimum size of the frontier to consider the frontier as the exploration goal. In meters.
     # default = `0.5`
-    min_frontier_size: 0.5    
+    min_frontier_size: 0.25    
     return_to_init: true
 
