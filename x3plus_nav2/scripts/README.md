@@ -49,12 +49,62 @@ Automatically saves maps from the Nav2 map server at regular intervals with time
 
 Creates timestamped map files:
 
-```
+```text
 maps/map_20260426_083015.pgm
 maps/map_20260426_083015.yaml
 maps/map_20260426_083515.pgm
 maps/map_20260426_083515.yaml
 ```
+
+## export_nav2_map_sequence.py
+
+Converts a set of saved Nav2 map YAML files into an equally sized frame sequence
+and optionally encodes a video.
+
+The script uses each YAML file's `resolution` and `origin` to align maps on one
+global canvas, so all output frames have the same dimensions.
+
+### Sequence Prerequisites
+
+- Python 3
+- Optional for video export: `ffmpeg` in `PATH`
+- Optional for PNG/JPG frame output: `pillow` (`pip install pillow`)
+
+### Sequence Usage
+
+```bash
+./export_nav2_map_sequence.py INPUT [INPUT ...] [OPTIONS]
+```
+
+Where each `INPUT` can be:
+
+- A YAML file
+- A directory (searched recursively for `*.yaml`/`*.yml`)
+- A glob pattern (for example: `maps/*.yaml`)
+
+### Common Examples
+
+```bash
+# Export equally sized PGM frames from all maps in ./maps
+./export_nav2_map_sequence.py ./maps --output-dir ./map_frames
+
+# Export PNG frames and create MP4 video
+./export_nav2_map_sequence.py ./maps --image-format png --video ./map_timelapse.mp4
+
+# Force output resolution (meters/pixel)
+./export_nav2_map_sequence.py ./maps --target-resolution 0.05 --video ./map_005.mp4
+```
+
+### Key Options
+
+- `--output-dir`: Directory where frame images are written (default: `./map_frames`)
+- `--image-format`: Frame format (`pgm`, `png`, or `jpg`; default: `pgm`)
+- `--video`: Optional output video path, for example `map.mp4`
+- `--fps`: Video framerate for `--video` (default: `2.0`)
+- `--target-resolution`: Output meters/pixel (default: finest input resolution)
+- `--background-value`: Fill value for empty canvas regions (default: `205`)
+- `--overwrite`: Overwrite existing frames/video
+- `--allow-yaw`: Ignore non-zero yaw in YAML origin (default behavior fails on yaw != 0)
 
 ### Stopping the Script
 

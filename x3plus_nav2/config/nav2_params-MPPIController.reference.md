@@ -146,8 +146,8 @@ Notes:
 | `ConstraintCritic.cost_weight` | Constraint critic weight | Higher prioritizes feasibility | `4.0` | `4.0` | `>= 0` |
 | `GoalCritic.enabled` | Attract to goal near end | Goal convergence behavior | `true` | `true` | `true`/`false` |
 | `GoalCritic.cost_power` | Cost exponent | Goal penalty shape | `1` | `1` | integer `>= 1` |
-| `GoalCritic.cost_weight` | Goal attraction weight | Higher turns attention to goal faster | `5.0` | `5.0` | `>= 0` |
-| `GoalCritic.threshold_to_consider` | Goal-critic activation distance | Handoff from path tracking to goaling | `1.4` | `1.4` | `>= 0` |
+| `GoalCritic.cost_weight` | Goal attraction weight | Higher turns attention to goal faster | `5.0` | `8.0` | `>= 0` |
+| `GoalCritic.threshold_to_consider` | Goal-critic activation distance | Handoff from path tracking to goaling | `1.4` | `0.8` | `>= 0` |
 | `GoalAngleCritic.enabled` | Align heading at goal | Heading precision near goal | `true` | `true` | `true`/`false` |
 | `GoalAngleCritic.cost_power` | Cost exponent | Penalty shape | `1` | `1` | integer `>= 1` |
 | `GoalAngleCritic.cost_weight` | Heading critic weight | Higher enforces heading | `3.0` | `3.0` | `>= 0` |
@@ -169,14 +169,14 @@ Notes:
 | `PathAlignCritic.cost_weight` | Path alignment weight | Higher follows path orientation tighter | `14.0` | `14.0` | `>= 0` |
 | `PathAlignCritic.max_path_occupancy_ratio` | Ignore align if path heavily occupied | Better behavior in dynamic clutter | `0.05` | `0.07` (typical) | `0..1` |
 | `PathAlignCritic.trajectory_point_step` | Evaluation stride | CPU/accuracy trade-off | `4` | `4` | `>= 1` |
-| `PathAlignCritic.threshold_to_consider` | Disable near goal | Goal critics take over | `1.4` | `1.4` | `>= 0` |
+| `PathAlignCritic.threshold_to_consider` | Disable near goal | Goal critics take over | `1.4` | `0.8` | `>= 0` |
 | `PathAlignCritic.offset_from_furthest` | Forward offset on path for heading target | Stability vs aggressiveness | `20` | `20` | `>= 0` |
 | `PathAlignCritic.use_path_orientations` | Use path orientation metadata | Needed for feasible-path directionality | `false` | `false` | `true`/`false` |
 | `PathFollowCritic.enabled` | Encourage progress along path | Main path-following drive term | `true` | `true` | `true`/`false` |
 | `PathFollowCritic.cost_power` | Cost exponent | Penalty shape | `1` | `1` | integer `>= 1` |
 | `PathFollowCritic.cost_weight` | Path-follow weight | Higher increases path progress priority | `5.0` | `5.0` | `>= 0` |
 | `PathFollowCritic.offset_from_furthest` | Target point offset | Controls lookahead behavior | `5` | `5` | `>= 0` |
-| `PathFollowCritic.threshold_to_consider` | Disable near goal | Handoff to goal critics | `1.4` | `1.4` | `>= 0` |
+| `PathFollowCritic.threshold_to_consider` | Disable near goal | Handoff to goal critics | `1.4` | `0.8` | `>= 0` |
 | `PathAngleCritic.enabled` | Penalize large angle to path | Helps sharp turns and reacquisition | `true` | `true` | `true`/`false` |
 | `PathAngleCritic.cost_power` | Cost exponent | Penalty shape | `1` | `1` | integer `>= 1` |
 | `PathAngleCritic.cost_weight` | Relative angle penalty weight | Higher enforces heading towards path | `2.0` | `2.2` | `>= 0` |
@@ -253,9 +253,9 @@ Notes:
 | `use_sim_time` | Use simulation clock | Time sync | `true` | `false` | `true`/`false` |
 | `planner_plugins` | Planner plugin IDs | Available global planners | `GridBased` | required | Plugin IDs |
 | `GridBased.plugin` | Planner class | Selects Navfn planner | `nav2_navfn_planner/NavfnPlanner` | same | Valid plugin class |
-| `GridBased.tolerance` | Goal tolerance at path end | Larger allows easier completion | `1.0` | `0.5` | `>= 0` |
+| `GridBased.tolerance` | Goal tolerance at path end | Larger allows easier completion | `0.2` | `0.5` | `>= 0` |
 | `GridBased.use_astar` | Use A* vs Dijkstra | A* usually faster in large maps | `false` | `false` | `true`/`false` |
-| `GridBased.allow_unknown` | Plan through unknown cells | Affects exploration vs conservatism | `true` | `true` | `true`/`false` |
+| `GridBased.allow_unknown` | Plan through unknown cells | Affects exploration vs conservatism | `false` | `true` | `true`/`false` |
 
 ## Smoother Server (`smoother_server.ros__parameters`)
 

@@ -612,10 +612,10 @@ controller_server:
         # Default 1. Power order to apply to term.
         cost_power: 1
         # Default 5.0. Weight to apply to critic term.
-        cost_weight: 5.0
+        cost_weight: 8.0
         # Default 1.4. Distance between robot and goal above which goal cost starts being considered
         # It is wise to start with this as being the same as your prediction horizon to have a clean hand-off with the path follower critic.
-        threshold_to_consider: 1.4
+        threshold_to_consider: 0.8
       # ----------------------------------------------------------------------------------------------------
       # This critic incentivize navigating to achieve the angle of the goal pose when in reasonable proximity to goal
       GoalAngleCritic:
@@ -678,7 +678,7 @@ controller_server:
         # to evaluate each point and computationally expensive.
         trajectory_point_step: 4
         # Distance (m) between robot and goal to stop considering path alignment and allow goal critics to take over.
-        threshold_to_consider: 1.4
+        threshold_to_consider: 0.8
         # Checks that the candidate trajectories are sufficiently far along their way tracking the path to apply the alignment critic. 
         # This ensures that path alignment is only considered when actually tracking the path, preventing awkward initialization motions 
         # preventing the robot from leaving the path to achieve the appropriate heading.
@@ -699,7 +699,7 @@ controller_server:
         offset_from_furthest: 5
         # Distance (m) between robot and goal to stop considering path following and allow goal critics to take over. It is wise to start with 
         # this as being the same as your prediction horizon to have a clean hand-off with the goal critic.
-        threshold_to_consider: 1.4
+        threshold_to_consider: 0.8
       # ----------------------------------------------------------------------------------------------------
       # This critic penalizes trajectories at a high relative angle to the path. This helps the robot make sharp turns when necessary 
       # due to large accumulated angular errors.
@@ -858,7 +858,7 @@ planner_server:
       # Smac 2D global planner for circular differential/omni robots.
       plugin: "nav2_smac_planner/SmacPlanner2D"
       # Tolerance in meters between requested goal pose and end of path.
-      tolerance: 1.0
+      tolerance: 0.2
       # Keep full-resolution planning for tighter indoor path quality.
       downsample_costmap: false
       downsampling_factor: 1
@@ -869,7 +869,7 @@ planner_server:
       # Higher values bias the global path toward lower-cost center space in corridors/corners.
       cost_travel_multiplier: 4.0
       # Whether to allow planning in unknown space.
-      allow_unknown: true
+      allow_unknown: false
 
 smoother_server:
   ros__parameters:
