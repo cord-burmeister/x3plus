@@ -179,52 +179,22 @@ bt_navigator_navigate_to_pose_rclcpp_node:
 controller_server:
   ros__parameters:
     # General controller server parameters
-    # Odometry topic consumed by the controller for velocity and motion feedback.
-    # Impact: wrong odometry degrades tracking and can trigger false progress failures.
-    # Default: plugin/launch dependent; practical requirement is a stable, filtered odom source.
     odom_topic: "/odometry/filtered"
     # cmd_vel_topic: "/my_robot/cmd_vel"  
     use_sim_time: true
-    # Controller loop rate in Hz.
-    # Impact: higher values improve responsiveness but raise CPU load; lower values reduce compute cost but can make tracking feel sluggish.
-    # Common Nav2 default: 20.0. Practical range: 5.0 to 30.0 for most robots.
     controller_frequency: 10.0
-    # Minimum commanded x velocity treated as non-zero.
-    # Impact: higher values suppress tiny noisy commands but can prevent very slow precise motion.
-    # Common Nav2 example default: 0.001. Valid range: >= 0.0, practical range: 0.0 to 0.02.
     min_x_velocity_threshold: 0.001
-    # Minimum commanded y velocity treated as non-zero.
-    # Impact: increasing this filters lateral jitter; too high disables fine strafing on omnidirectional bases.
-    # Common Nav2 example default: 0.5 for differential-style examples, but omni robots usually need much lower. Valid range: >= 0.0, practical range: 0.0 to 0.05.
-    min_y_velocity_threshold: 0.01
-    # Minimum commanded yaw rate treated as non-zero.
-    # Impact: higher values reduce spin dithering, but can make fine heading convergence harder.
-    # Common Nav2 example default: 0.001. Valid range: >= 0.0, practical range: 0.0 to 0.05.
+    min_y_velocity_threshold: 0.0
     min_theta_velocity_threshold: 0.001
-    # Allowed time in seconds the controller may fail before the action aborts.
-    # Impact: larger values tolerate transient blockage or unstable sensing; smaller values fail fast.
-    # Common Nav2 default: 0.0 in many setups. Valid range: >= 0.0, practical range: 0.0 to 2.0.
     failure_tolerance: 0.6
-    # Active progress checker plugin ID.
-    # Impact: selects the logic used to decide whether the robot is making progress.
     progress_checker_plugin: progress_checker
-    # Active goal checker plugin IDs.
-    # Impact: chooses the criteria for declaring a goal reached.
     goal_checker_plugins: [general_goal_checker]   # "precise_goal_checker"
-    # Active local controller plugin IDs.
-    # Impact: selects the algorithm stack used to generate cmd_vel.
     controller_plugins: ["FollowPath"]
 
     # Progress checker parameters
     progress_checker:
       plugin: nav2_controller::SimpleProgressChecker
-      # Minimum displacement in meters required inside the allowance window.
-      # Impact: increasing this catches stalls sooner but can false-trigger in tight maneuvers; decreasing it is more forgiving.
-      # Common Nav2 example default: 0.5. Valid range: > 0.0, practical range: 0.02 to 0.5.
       required_movement_radius: 0.05 # was 0.5 
-      # Time window in seconds allowed to achieve the required movement radius.
-      # Impact: larger values reduce false stall detection; smaller values detect genuine stuck states faster.
-      # Common Nav2 example default: 10.0. Valid range: > 0.0, practical range: 5.0 to 60.0.
       movement_time_allowance: 40.0 # was 10.0
     # Goal checker parameters
     #precise_goal_checker:
@@ -233,323 +203,122 @@ controller_server:
     #  yaw_goal_tolerance: 0.25
     #  stateful: True
     general_goal_checker:
-      # If true, latches the XY goal reached state and focuses on orientation afterward.
-      # Impact: helps avoid repeatedly losing the goal state due to tiny oscillations near the target.
-      # Common default: true. Valid values: true or false.
       stateful: true
       plugin: nav2_controller::SimpleGoalChecker
-      # Position tolerance in meters for goal completion.
-      # Impact: larger values make docking easier but reduce final placement precision.
-      # Common Nav2 example default: 0.25. Valid range: > 0.0, practical range: 0.05 to 0.5.
       xy_goal_tolerance: 0.2
-      # Heading tolerance in radians for goal completion.
-      # Impact: larger values accept looser final orientation; smaller values can cause extra spinning near the goal.
-      # Common Nav2 example default: 0.25. Valid range: > 0.0, practical range: 0.05 to 0.5.
-      yaw_goal_tolerance: 0.1
+      yaw_goal_tolerance: 0.2
     # DWB parameters
     FollowPath:
-      # With 180-degree lidar, rotate into heading before translating for better front-sector coverage.
       plugin: "nav2_rotation_shim_controller::RotationShimController"
-      # Underlying local planner used after the rotation shim aligns the robot.
-      # Impact: this determines the actual trajectory sampling and scoring behavior.
+      # Configuring Primary Controller¶
+      # There is one more remaining parameter of the RotationShimController not mentioned above, the primary_controller. 
+      # This is the type of controller that your application would like to use as the primary modus operandi. 
+      # It will share the same name and yaml namespace as the shim plugin. You can observe this below with 
+      # the primary controller set the DWB
+      # https://docs.nav2.org/tutorials/docs/using_shim_controller.html
       primary_controller: "dwb_core::DWBLocalPlanner"
-      # Heading error in radians above which the shim rotates before handing off to DWB.
-      # Impact: larger values allow more translation while misaligned; smaller values favor facing-forward starts.
-      # Common RotationShim default: 0.785 rad. Valid range: > 0.0, practical range: 0.2 to 1.0.
-      angular_dist_threshold: 0.2
-      # Distance ahead in meters used to estimate the desired heading along the path.
-      # Impact: larger values smooth the heading target; smaller values react more tightly to local curvature.
-      # Default varies by release/plugin. Valid range: > 0.0, practical range: 0.1 to 0.5.
-      forward_sampling_distance: 0.25
-      # Angular velocity used by the shim while rotating into heading.
-      # Impact: higher values align faster but can overshoot on low-traction platforms.
-      # Default varies by release/plugin. Valid range: > 0.0, practical range: 0.3 to 1.5 rad/s.
-      rotate_to_heading_angular_vel: 0.85
-      # Maximum angular acceleration during shim rotation.
-      # Impact: higher values make heading acquisition snappier; lower values are smoother and easier on actuators.
-      # Default varies by release/plugin. Valid range: > 0.0, practical range: 0.5 to 4.0 rad/s^2.
-      max_angular_accel: 2.2
-      # Time horizon in seconds for shim collision simulation while rotating or transitioning.
-      # Impact: larger values are safer but more conservative near obstacles.
-      # Default varies by release/plugin. Valid range: > 0.0, practical range: 0.5 to 3.0.
+      # The angular distance (in radians) apart from the robot’s current heading and the approximated path heading 
+      # to trigger the rotation behavior. Once the robot is within this threshold, control is handed over 
+      # to the primary controller plugin.
+      # angular_dist_threshold: reduce from 0.785 to around 0.35 to 0.5 to avoid excessive stop-rotate behavior
+      angular_dist_threshold: 0.35
+      #angular_dist_threshold: 0.1
+      # The distance (in meters) away from the robot to select a point on the path to approximate the path’s starting heading at. 
+      # This is analogous to a “lookahead” point.
+      #forward_sampling_distance: 1.5
+      forward_sampling_distance: 1.0
+      # The angular velocity (in rad/s) to have the robot rotate to heading by, when the behavior is enacted.
+      rotate_to_heading_angular_vel: 1.8
+      # The angular acceleration (in rad/s/s) to have the robot rotate to heading by, when the behavior is enacted.
+      max_angular_accel: 3.2
+      # The Time (s) to forward project the rotation command to check for collision
       simulate_ahead_time: 1.0
-      # Publishes detailed trajectory scoring for debugging.
-      # Impact: useful for tuning, but can add log/visualization overhead.
-      # Common DWB default: false. Valid values: true or false.
       debug_trajectory_details: true
-      # Minimum forward x velocity sampled by DWB.
-      # Impact: raising this prevents very slow crawling; lowering it improves precise starts and near-goal control.
-      # Common DWB default: 0.0. Valid range: >= 0.0 and <= max_vel_x.
       min_vel_x: 0.0
-      # Minimum lateral y velocity sampled by DWB.
-      # Impact: more negative values allow stronger strafing; values near zero bias the robot toward heading-aligned motion.
-      # Common DWB default for non-holonomic robots: 0.0. Valid range: <= 0.0 for symmetric omni configs, practical range: -0.2 to 0.0.
-      min_vel_y: 0.0      # Keep limited strafing, but bias more strongly toward heading-aligned motion
-      # Maximum forward x velocity in m/s.
-      # Impact: higher values improve throughput but require matching acceleration limits and collision margins.
-      # Common DWB example default: 0.26. Valid range: > 0.0, practical range: 0.1 to 1.0.
-      max_vel_x: 0.30
-      # Maximum lateral y velocity in m/s.
-      # Impact: larger values increase strafing authority; smaller values encourage forward-facing travel.
-      # Common DWB default for differential robots: 0.0. Valid range: >= 0.0, practical range for small omni bases: 0.0 to 0.3.
-      max_vel_y: 0.0       # Limit lateral speed so robot is more likely to face travel direction
-      # Maximum angular velocity in rad/s.
-      # Impact: higher values turn faster but can destabilize tracking and increase overshoot.
-      # Common DWB example default: 1.0. Valid range: > 0.0, practical range: 0.3 to 2.0.
-      max_vel_theta: 0.65
-      # Minimum translational speed magnitude in the XY plane.
-      # Impact: values above zero prevent slow motion commands; zero permits stationary rotation and fine creeping.
-      # Common DWB default: 0.0. Valid range: >= 0.0 and <= max_speed_xy.
+      min_vel_y: 0.0
+      max_vel_x: 0.4
+      max_vel_y: 0.0
+      max_vel_theta: 1.0
       min_speed_xy: 0.0
-      # Maximum translational speed magnitude in the XY plane.
-      # Impact: acts as the overall cap on combined x/y motion.
-      # Common DWB example default: about 0.26. Valid range: > 0.0, must be >= max component speed used in practice.
-      max_speed_xy: 0.34
-      # Minimum angular speed magnitude in rad/s for sampled trajectories.
-      # Impact: higher values prevent tiny ineffective turns but can make fine orientation control harder.
-      # Common DWB example default: 0.0. Valid range: >= 0.0 and <= max_vel_theta.
-      min_speed_theta: 0.10
+      max_speed_xy: 0.5
+      min_speed_theta: 0.0
       # Add high threshold velocity for turtlebot 3 issue.
       # https://github.com/ROBOTIS-GIT/turtlebot3_simulations/issues/75
-      # Maximum forward acceleration in m/s^2.
-      # Impact: higher values improve responsiveness; lower values reduce wheel slip and actuator stress.
-      # Common DWB example default: 2.5. Valid range: > 0.0, practical range: 0.2 to 5.0.
       acc_lim_x: 1.0
-      # Maximum lateral acceleration in m/s^2.
-      # Impact: relevant for mecanum/omni robots; higher values enable faster strafing transitions.
-      # Common differential default: 0.0 or unused. Valid range: >= 0.0, practical range for small omni bases: 0.2 to 3.0.
-      acc_lim_y: 1.0       # Mecanum: enable lateral acceleration
-      # Maximum angular acceleration in rad/s^2.
-      # Impact: higher values allow quicker yaw response but can cause jerky rotation.
-      # Common DWB example default: 3.2. Valid range: > 0.0, practical range: 0.5 to 6.0.
-      acc_lim_theta: 2.2
-      # Maximum forward deceleration in m/s^2, expressed as a negative value.
-      # Impact: more negative values stop faster; values too close to zero lengthen stopping distance.
-      # Common DWB example default: -2.5. Valid range: < 0.0, practical range: -5.0 to -0.2.
+      acc_lim_y: 0.0
+      acc_lim_theta: 3.2
       decel_lim_x: -1.0
-      # Maximum lateral deceleration in m/s^2, expressed as a negative value.
-      # Impact: stronger magnitude improves lateral stopping and path correction on omni platforms.
-      # Common differential default: 0.0 or unused. Valid range: < 0.0 for omni configs, practical range: -3.0 to -0.2.
-      decel_lim_y: -1.0    # Mecanum: enable lateral deceleration
-      # Maximum angular deceleration in rad/s^2, expressed as a negative value.
-      # Impact: more negative values brake yaw faster; too aggressive can cause oscillation.
-      # Common DWB example default: -3.2. Valid range: < 0.0, practical range: -6.0 to -0.5.
-      decel_lim_theta: -2.2
+      decel_lim_y: 0.0
+      decel_lim_theta: -3.2
       # If you want more trajectory diversity in the future you can raise vtheta_samples in steps of 4 while monitoring the loop timing warning in the logs.
       # Fewer linear velocity candidates to evaluate per cycle
-      # Number of x-velocity samples evaluated each control cycle.
-      # Impact: more samples improve search coverage but increase CPU cost linearly.
-      # Common DWB default: 20. Valid range: integer >= 1, practical range: 6 to 30.
-      vx_samples: 10
-      # Number of y-velocity samples evaluated each control cycle.
-      # Impact: more samples improve strafing options; on omni robots this can be a major CPU multiplier.
-      # Common DWB default: 5. Valid range: integer >= 1, practical range: 1 to 10.
-      vy_samples: 3        # Further reduce lateral options to favor facing-forward trajectories
+      vx_samples: 12
+      vy_samples: 1
       # The biggest CPU driver — 30 × 12 = 360 trajectories was too many at 15 Hz for the turtlebot 3 in Gazebo, but 16 × 12 = 192 is manageable. You can increase this if you have a more powerful computer and want more trajectory options to evaluate.
       # The total trajectory evaluations went from 30 × 16 (vx_samples x vtheta_samples) = 480 down to 16 × 12 = 192, which is well within budget at 10 Hz.
-      # Number of angular velocity samples evaluated each cycle.
-      # Impact: more samples improve turning choice resolution but raise CPU cost linearly.
-      # Common DWB default: 20. Valid range: integer >= 1, practical range: 8 to 30.
-      vtheta_samples: 12
+      vtheta_samples: 16
       # sim_time: reduce from 1.5 to 1.0 to 1.2 for tighter tracking
       # but increase to 1.5 for better obstacle avoidance, but can cause more oscillation in tight spaces.
-      # Forward simulation horizon in seconds for candidate trajectories.
-      # Impact: larger values improve obstacle foresight but can make the controller less agile in tight spaces.
-      # Common DWB example default: 1.7. Valid range: > 0.0, practical range: 0.8 to 3.0.
-      sim_time: 2.0
-      # Linear interpolation step in meters for trajectory scoring.
-      # Impact: smaller values improve collision fidelity but increase compute cost.
-      # Common DWB example default: 0.05. Valid range: > 0.0, practical range: 0.02 to 0.1.
+      sim_time: 1.2
       linear_granularity: 0.1
-      # Angular interpolation step in radians for trajectory scoring.
-      # Impact: smaller values improve rotational collision fidelity but increase compute cost.
-      # Common DWB example default: 0.025. Valid range: > 0.0, practical range: 0.02 to 0.2.
       angular_granularity: 0.1
-      # TF lookup tolerance in seconds while transforming plans and costmap data.
-      # Impact: larger values tolerate timestamp skew; too large can hide timing problems.
-      # Common DWB example default: 0.2. Valid range: >= 0.0, practical range: 0.05 to 0.5.
       transform_tolerance: 0.25
-      # Local controller XY goal tolerance in meters.
-      # Impact: should generally match or be slightly tighter than the goal checker to avoid fighting near the goal.
-      # Common example default: 0.25. Valid range: > 0.0, practical range: 0.05 to 0.5.
       xy_goal_tolerance: 0.2
-      # Translational speed below which the robot is considered stopped.
-      # Impact: increasing this makes stop detection easier but can misclassify slow motion as stopped.
-      # Common DWB example default: 0.25 in older TB3 examples, often reduced for precise robots. Valid range: >= 0.0, practical range: 0.005 to 0.1.
       trans_stopped_velocity: 0.02
       # Stops evaluating once a valid best is found, cuts cost further
-      # Impact: improves runtime, but exhaustive scoring may find a slightly better trajectory when disabled.
-      # Common DWB default: true. Valid values: true or false.
       short_circuit_trajectory_evaluation: true
-      # Keeps internal goal-progress state between cycles.
-      # Impact: helps stabilize behavior near the goal and reduces oscillatory replanning decisions.
-      # Common DWB default: true. Valid values: true or false.
       stateful: true
-
-
-      # Recommended order:
-      # ```yaml
-      # critics: [Oscillation, BaseObstacle, Twirling, PreferForward, PathAlign, GoalAlign, PathDist, GoalDist]
-      # ```
-      # The logic behind the full ordering:
-      # | Position | Critic | Role |
-      # |---|---|---|
-      # | 1 | `Oscillation` | Disqualifier — marks oscillating trajectories invalid immediately |
-      # | 2 | `BaseObstacle` | Safety disqualifier — rejects collision trajectories early |
-      # | 3 | `Twirling` | Soft penalty — discourages spinning, no hard rejection |
-      # | 4 | `PreferForward` | Directional bias — rewards forward-facing motion |
-      # | 5 | `PathAlign` | Heading scoring — aligns nose with path direction |
-      # | 6 | `GoalAlign` | Heading scoring — aligns nose toward goal |
-      # | 7 | `PathDist` | Distance scoring — keeps robot close to planned path |
-      # | 8 | `GoalDist` | Distance scoring — draws robot toward goal |
-
-      # Ordered list of DWB critics used to score candidate trajectories.
-      # Impact: critic choice and order determine how motion tradeoffs are evaluated.
-      critics: [Oscillation, BaseObstacle, Twirling, PreferForward, PathAlign, GoalAlign, PathDist, GoalDist]
-      # RotateToGoal removed: mecanum can approach goal from any direction without rotating first.
+      critics: [RotateToGoal, Oscillation, BaseObstacle, GoalAlign, PathAlign, PathDist, GoalDist]
+      PreferForward.scale: 1.0
       # if you want to keep safety and just allow higher sustained speed near walls, 
       # you can lower BaseObstacle.scale from 1.0 to 0.5.      
-      # Weight for obstacle proximity cost.
-      # Impact: higher values keep more clearance from obstacles but can reject narrow valid paths.
-      # Common DWB examples often use 0.02 to 0.1 for meter-scored setups; exact effective range depends on map resolution and critic formulation. Practical tuning range here: 0.5 to 5.0.
-      BaseObstacle.scale: 3.0
-      # Penalty for unnecessary spinning/twirling.
-      # Impact: higher values discourage in-place rotation during path following.
-      # Common default varies by critic enablement. Valid range: >= 0.0, practical range: 0.0 to 10.0.
-      Twirling.scale: 1.0
-      # Practical range for your setup:
-      #
-      # 8.0 to 12.0: balanced
-      # 12.0 to 16.0: strong front-facing bias
-      # Above 16.0: usually too restrictive unless you want near-differential behavior
-      PreferForward.scale: 14.0
-      # With 180-degree lidar, keep nose closer to motion direction for better obstacle visibility.
-      # Weight for aligning the robot heading with the local path direction.
-      # Impact: higher values produce more nose-to-path behavior; too high can reduce lateral freedom on mecanum bases.
-      # Common default varies by config. Valid range: >= 0.0, practical range: 0.0 to 20.0.
-      PathAlign.scale: 18.0
-      # Distance ahead on the path used to compute alignment heading.
-      # Impact: larger values smooth the heading target; smaller values track sharp bends more tightly.
-      # Common default varies by config. Valid range: > 0.0, practical range: 0.05 to 0.5 m.
-      PathAlign.forward_point_distance: 0.2
-      # Weight for aligning the robot heading toward the goal heading.
-      # Impact: higher values emphasize final orientation earlier in the approach.
-      # Common default varies by config. Valid range: >= 0.0, practical range: 0.0 to 20.0.
-      GoalAlign.scale: 4.0
-      # Forward lookahead distance used by the goal alignment critic.
-      # Impact: larger values smooth heading corrections; smaller values react more locally near the goal.
-      # Common default varies by config. Valid range: > 0.0, practical range: 0.05 to 0.5 m.
+      BaseObstacle.scale: 0.5
+      # PathAlign.scale: keep near current or slightly higher, 24.0 to 32.0 (start at 24.0) to encourage better path tracking, but can cause more oscillation in tight spaces.
+      PathAlign.scale: 16.0
+      PathAlign.forward_point_distance: 0.1
+      GoalAlign.scale: 2.0
       GoalAlign.forward_point_distance: 0.1
       # PathDist.scale: 20.0 to 32.0 (start at 24.0)
-      # Weight for minimizing lateral/metric distance from the path.
-      # Impact: higher values hug the path more tightly; too high can make obstacle avoidance less flexible.
-      # Common default varies by config. Valid range: >= 0.0, practical range: 1.0 to 32.0.
-      PathDist.scale: 12.0
+      PathDist.scale: 16.0
       # GoalDist.scale: lower to 0.5 to 1.5 (start at 1.0) so it stops cutting to goal too early
-      # Weight for minimizing distance to goal.
-      # Impact: higher values cut toward the goal more aggressively, sometimes at the expense of path fidelity.
-      # Common default varies by config. Valid range: >= 0.0, practical range: 0.5 to 10.0.
-      GoalDist.scale: 2.0
-      # Weight for the RotateToGoal critic.
-      # Impact: zero disables goal-rotation enforcement, which suits holonomic/mecanum robots that need not face the goal first.
-      # Common default in many non-holonomic examples: 32.0. Valid range: >= 0.0, practical range: 0.0 to 64.0.
-      RotateToGoal.scale: 22.0
-      # Factor controlling how strongly linear speed is reduced while preparing to rotate to goal.
-      # Impact: higher values slow the robot more aggressively near rotate-to-goal transitions.
-      # Common default varies by config. Valid range: > 0.0, practical range: 1.0 to 10.0.
+      GoalDist.scale: 0.8
+      RotateToGoal.scale: 1.0
       RotateToGoal.slowing_factor: 1.3
-      # Lookahead time in seconds for rotate-to-goal evaluation; -1 means use critic-specific default behavior.
-      # Impact: larger positive values consider further future orientation effects.
-      # Common default in examples: -1.0. Valid range: -1.0 or >= 0.0.
       RotateToGoal.lookahead_time: -1.0
     
 
 local_costmap:
   local_costmap:
     ros__parameters:
-      # Rate in Hz at which the local costmap is recalculated from sensor data.
-      # Impact: higher values react faster to new obstacles; lower values reduce CPU load.
-      # Common Nav2 default: 10.0. Valid range: > 0.0, practical range: 5.0 to 20.0.
-      update_frequency: 10.0
-      # Rate in Hz at which the costmap is published for visualization and downstream consumers.
-      # Impact: can be lower than update_frequency to save bandwidth; too low causes stale Rviz display.
-      # Common Nav2 default: 5.0. Valid range: > 0.0, practical range: 1.0 to 20.0.
-      publish_frequency: 5.0
-      # Reference frame for the rolling costmap; must match the odometry frame.
-      # Impact: mismatch causes costmap drift and smeared obstacle marks.
-      # Common Nav2 default: odom. Valid values: any valid TF frame, typically "odom".
-      global_frame: odom
-      # Robot base frame used to center the rolling window on the robot.
-      # Impact: incorrect frame shifts the footprint relative to sensor data.
-      # Common Nav2 default: base_link or base_footprint.
-      robot_base_frame: base_footprint
-      use_sim_time: True
-      # Keep costmap centered on the robot rather than fixed at a global origin.
-      # Impact: required for local costmap; disabling treats it as globally fixed.
-      # Common Nav2 default: true. Valid values: true or false.
-      rolling_window: true
-      # Local costmap width in meters.
-      # Impact: wider window provides more lookahead context; narrower reduces compute cost.
-      # Common Nav2 example default: 3.0. Valid range: > 0.0, practical range: 3.0 to 10.0.
-      width: 5
-      # Local costmap height in meters.
-      # Impact: same tradeoff as width; together they bound the local planning area.
-      # Common Nav2 example default: 3.0. Valid range: > 0.0, practical range: 3.0 to 10.0.
-      height: 5
-      # Cell size in meters per pixel.
-      # Impact: finer resolution improves narrow-passage accuracy but raises memory and compute cost quadratically.
-      # Common Nav2 default: 0.05. Valid range: > 0.0, practical range: 0.02 to 0.1.
-      resolution: 0.05
-      # Mecanum robot polygon footprint: 30 cm (length) x 25 cm (width)
-      # Points are [x, y] in meters, defined clockwise from front-right.
-      footprint: "[[0.15, 0.125], [0.15, -0.125], [-0.15, -0.125], [-0.15, 0.125]]"
-      footprint_padding: 0.03 # Extra collision buffer to avoid grazing walls in simulation
+      update_frequency: 10.0 # Frequency to update the costmap
+      publish_frequency: 5.0 # Frequency to publish the costmap
+      global_frame: odom # The global frame of the costmap
+      robot_base_frame: base_footprint # The robot's base frame
+      use_sim_time: True # Use simulation time if running in a simulator
+      rolling_window: true # Use a rolling window for the costmap
+      width: 5 # Width of the costmap
+      height: 5 # Height of the costmap
+      resolution: 0.05 # Resolution of the costmap
+      # For the global costmap footprint, the decision to choose between the robot_radius (circular) 
+      # or footprint (polygon) parameter depends on the robot, its environment, and the path planning algorithm you will use. 
+      robot_radius: 0.15
       # This is the default settings for the plugins
       plugins: ["obstacle_layer", "inflation_layer"]
 #      plugins: ["voxel_layer", "obstacle_layer", "inflation_layer"]
           # plugins: ["voxel_layer", "stvl_layer", "inflation_layer"]
       obstacle_layer:
             plugin: nav2_costmap_2d::ObstacleLayer
-            # Enable or disable this layer entirely.
-            # Impact: disabling removes all sensor-detected obstacles from the local costmap.
-            # Common default: true. Valid values: true or false.
             enabled: true
-            # Named list of sensor sources that feed this layer.
-            # Impact: adding more sources increases obstacle coverage; each source adds compute cost.
             observation_sources: scan
             scan:
               topic: /scan
-              # Maximum sensor reading height in meters; returns above this are discarded.
-              # Impact: set slightly above robot height to filter ceiling reflections.
-              # Common default: sensor/mounting dependent. Valid range: > 0.0, practical range: 0.5 to 2.5 m.
               max_obstacle_height: 1.2
-              # Remove free-space cells along each ray when no obstacle is hit.
-              # Impact: keeps costmap accurate as obstacles move away; disabling leaves ghost marks.
-              # Common default: true. Valid values: true or false.
               clearing: true
-              # Insert obstacle cells at the endpoint of each ray that hits an obstacle.
-              # Impact: disabling prevents new obstacle marks; almost always true.
-              # Common default: true. Valid values: true or false.
               marking: true
-              # ROS message type for this source.
-              # Impact: must match the topic's published type.
-              # Valid values: LaserScan, PointCloud, PointCloud2.
               data_type: LaserScan
-              # Maximum range in meters to raytrace free space from the sensor origin.
-              # Impact: larger values clear more free space; setting beyond sensor accuracy can erase real obstacles.
-              # Common Nav2 default: 3.0. Valid range: > 0.0, practical range: 1.5 to sensor max range.
               raytrace_max_range: 3.0
-              # Minimum range in meters at which raytracing starts.
-              # Impact: raising this suppresses close-range noise such as robot body reflections.
-              # Common Nav2 default: 0.0. Valid range: >= 0.0, practical range: 0.0 to 0.3.
               raytrace_min_range: 0.0
-              # Maximum range in meters at which a laser return is inserted as an obstacle.
-              # Impact: reducing this prevents long-range noisy detections from polluting the costmap.
-              # Common Nav2 default: 2.5. Valid range: > 0.0, must be <= raytrace_max_range.
               obstacle_max_range: 2.5
-              # Minimum range in meters below which laser returns are ignored as obstacles.
-              # Impact: raising this filters very close-range noise or ground hits on pitched lidars.
-              # Common Nav2 default: 0.0. Valid range: >= 0.0, practical range: 0.0 to 0.3.
               obstacle_min_range: 0.0
 
       # http://wiki.ros.org/costmap_2d
@@ -598,8 +367,8 @@ local_costmap:
         # the robot needs at least 2 × (robot_radius + inflation_radius) of clearance 
 
         # cost_scaling_factor: 3.0
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.20 # Reduced for narrow doorway traversal; tune back up if clearance feels too tight
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.22 # The radius in meters to which the map inflates obstacle cost values
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
@@ -699,35 +468,14 @@ local_costmap:
 global_costmap:
   global_costmap:
     ros__parameters:
-      # Rate in Hz at which the global costmap is updated from sensor observations.
-      # Impact: increasing this makes the global map react faster to new dynamic obstacles but raises CPU load.
-      # Common Nav2 default: 1.0. Valid range: > 0.0, practical range: 0.5 to 5.0.
       update_frequency: 1.0
-      # Rate in Hz at which the global costmap is published for the planner and visualization.
-      # Impact: can be lower than update_frequency; too low makes Rviz display stale.
-      # Common Nav2 default: 1.0. Valid range: > 0.0, practical range: 0.5 to 5.0.
       publish_frequency: 1.0
-      # Fixed reference frame for the global costmap.
-      # Impact: must match the static map frame; mismatch prevents correct localization integration.
-      # Common Nav2 default: map. Valid values: any valid TF frame, typically "map".
       global_frame: map
-      # Robot base frame used for footprint-based collision checking.
-      # Impact: incorrect frame offsets the collision footprint from where the robot actually is.
-      # Common Nav2 default: base_link or base_footprint.
       robot_base_frame: base_footprint
       use_sim_time: True
-      # Mecanum robot polygon footprint: 30 cm (length) x 25 cm (width)
-      # Polygon footprint vertices [x, y] in meters defining the robot's 2D collision outline.
-      # Impact: too small leads to collisions; too large makes the planner avoid passable gaps.
-      # Valid values: YAML list of [x, y] pairs; must be a convex or simple polygon.
-      footprint: "[[0.15, 0.125], [0.15, -0.125], [-0.15, -0.125], [-0.15, 0.125]]"
-      # Extra buffer in meters added around the footprint polygon for additional collision safety.
-      # Impact: larger values provide more clearance from walls but can block narrow passages.
-      # Common Nav2 default: 0.01. Valid range: >= 0.0, practical range: 0.0 to 0.1.
-      footprint_padding: 0.03
-      # Cell size in meters per pixel for the global costmap.
-      # Impact: finer resolution allows planning through tighter gaps but increases memory and replan time.
-      # Common Nav2 default: 0.05. Valid range: > 0.0, practical range: 0.02 to 0.1.
+      # For the global costmap footprint, the decision to choose between the robot_radius (circular) 
+      # or footprint (polygon) parameter depends on the robot, its environment, and the path planning algorithm you will use. 
+      robot_radius: 0.15
       resolution: 0.05
       # If false, each pixel has one of 2 states: lethal obstacle or free. If true, each pixel has one of 3 states: lethal obstacle, free, or unknown.
       # default: false
@@ -746,47 +494,18 @@ global_costmap:
       # plugins: ["static_layer", "stvl_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
-        # Enable or disable this layer entirely.
-        # Impact: disabling removes dynamic sensor-detected obstacles from global planning.
-        # Common default: true. Valid values: true or false.
         enabled: True
 #        observation_sources: scan pointcloud
-        # Named list of sensor sources that feed this layer.
-        # Impact: adding more sources increases coverage; each adds compute cost.
         observation_sources: scan 
         scan:
           topic: /scan
-          # Maximum sensor reading height in meters; returns above this are discarded.
-          # Impact: set slightly above robot height to avoid ceiling/overhang detections.
-          # Common default: sensor/mounting dependent. Valid range: > 0.0, practical range: 0.5 to 2.5 m.
           max_obstacle_height: 2.0
-          # Remove free-space cells along each ray when no obstacle is hit.
-          # Impact: keeps the global map accurate as dynamic obstacles clear; disabling leaves ghost marks.
-          # Common default: true. Valid values: true or false.
           clearing: True
-          # Insert obstacle cells at the endpoint of each ray that hits an obstacle.
-          # Impact: disabling prevents new obstacle marks from appearing; almost always true.
-          # Common default: true. Valid values: true or false.
           marking: True
-          # ROS message type for this source.
-          # Impact: must match the topic's published type.
-          # Valid values: LaserScan, PointCloud, PointCloud2.
           data_type: "LaserScan"
-          # Maximum range in meters to raytrace free space in the global costmap.
-          # Impact: larger values clear more area; very large values can clear real obstacles near the sensor range limit.
-          # Common Nav2 default: 3.0. Valid range: > 0.0, practical range: up to sensor max reliable range.
           raytrace_max_range: 10.0
-          # Minimum range in meters at which raytracing starts.
-          # Impact: raising this avoids using very close returns that may be noise or the robot body.
-          # Common Nav2 default: 0.0. Valid range: >= 0.0, practical range: 0.0 to 0.3.
           raytrace_min_range: 0.08
-          # Maximum range in meters at which a laser return is inserted as an obstacle.
-          # Impact: reducing this filters long-range noisy detections from the global map.
-          # Common Nav2 default: 2.5. Valid range: > 0.0, must be <= raytrace_max_range.
           obstacle_max_range: 2.5
-          # Minimum range in meters below which laser returns are ignored as obstacles.
-          # Impact: raising this filters very close noise, robot body returns, or ground hits on pitched lidars.
-          # Common Nav2 default: 0.0. Valid range: >= 0.0, practical range: 0.0 to 0.3.
           obstacle_min_range: 0.08
         # pointcloud:  # no frame set, uses frame from message
         #   topic: /depth/image_raw/points
@@ -813,9 +532,9 @@ global_costmap:
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
         # Exponential decay factor across inflation radius.
-        cost_scaling_factor: 4.0
+        cost_scaling_factor: 2.5
         # Radius to inflate costmap around lethal obstacles.
-        inflation_radius: 0.20
+        inflation_radius: 0.28
         # Whether to inflate unknown cells as if lethal.
         # inflate_unknown: false
         # Whether to inflate unknown cells.
@@ -924,19 +643,14 @@ map_server:
     use_sim_time: True
     # Overridden in launch by the "map" launch configuration or provided default value.
     # To use in yaml, remove the default "map" value in the tb3_simulation_launch.py file & provide full path to map below.
-    # Absolute path to the map metadata YAML loaded by nav2_map_server.
     yaml_filename: ""
 
 map_saver:
   ros__parameters:
     use_sim_time: True
-    # Maximum time in seconds to wait for map save operations to complete.
     save_map_timeout: 5.0
-    # Probability threshold below which a cell is saved as free space.
     free_thresh_default: 0.25
-    # Probability threshold above which a cell is saved as occupied.
     occupied_thresh_default: 0.65
-    # Subscribe with transient local QoS so late joiners receive the latest map.
     map_subscribe_transient_local: True
 
 
@@ -958,10 +672,8 @@ map_saver:
 # See https://docs.nav2.org/tuning/index.html for details
 planner_server:
   ros__parameters:
-    # Expected planning loop frequency in Hz; used for diagnostics and timing warnings.
     expected_planner_frequency: 20.0
     use_sim_time: True
-    # Enabled global planner plugin IDs.
     planner_plugins: ["GridBased"]
     GridBased:
       # The NavfnPlanner is a global planner plugin for the Nav2 Planner server. It implements the Navigation Function planner
@@ -991,26 +703,18 @@ planner_server:
 smoother_server:
   ros__parameters:
     use_sim_time: True
-    # Enabled path smoother plugin IDs.
     smoother_plugins: ["simple_smoother"]
     simple_smoother:
       plugin: "nav2_smoother::SimpleSmoother"
-      # Iteration stop threshold; lower values pursue a more exact smoothed solution.
       tolerance: 1.0e-10
-      # Maximum number of smoothing iterations before giving up.
       max_its: 1000
-      # Run an additional refinement pass on the smoothed path.
       do_refinement: True
 
 behavior_server:
   ros__parameters:
-    # Raw local costmap topic used by recovery behaviors for collision checking.
     costmap_topic: local_costmap/costmap_raw
-    # Published robot footprint topic used by behaviors that need geometry awareness.
     footprint_topic: local_costmap/published_footprint
-    # Recovery and auxiliary behavior execution loop frequency in Hz.
     cycle_frequency: 10.0
-    # Enabled behavior plugin IDs available to the BT navigator.
     behavior_plugins: ["spin", "backup", "drive_on_heading", "assisted_teleop", "wait"]
     spin:
       plugin: "nav2_behaviors/Spin"
@@ -1022,18 +726,13 @@ behavior_server:
       plugin: "nav2_behaviors/Wait"
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
-    # Local planning frame for recovery behaviors.
     global_frame: odom
     robot_base_frame: base_footprint
-    # TF lookup tolerance in seconds for behavior execution.
     transform_tolerance: 0.1
     use_sim_time: true
-    # Forward simulation horizon in seconds used by certain behaviors.
     simulate_ahead_time: 2.0
-    # Rotational speed limits for spin-style behaviors in rad/s.
     max_rotational_vel: 1.0
     min_rotational_vel: 0.4
-    # Maximum rotational acceleration in rad/s^2.
     rotational_acc_lim: 3.2
 
 robot_state_publisher:
@@ -1043,39 +742,25 @@ robot_state_publisher:
 waypoint_follower:
   ros__parameters:
     use_sim_time: True
-    # Waypoint processing loop frequency in Hz.
     loop_rate: 20
-    # Continue remaining waypoints even if one waypoint task fails.
     stop_on_failure: false
-    # Task executor plugin run at each waypoint.
     waypoint_task_executor_plugin: "wait_at_waypoint"
     wait_at_waypoint:
       plugin: "nav2_waypoint_follower::WaitAtWaypoint"
-      # Enable waiting behavior when a waypoint is reached.
       enabled: True
-      # Pause duration at each waypoint in milliseconds.
       waypoint_pause_duration: 200
 
 velocity_smoother:
   ros__parameters:
     use_sim_time: True
-    # Rate in Hz at which smoothed velocity commands are generated.
     smoothing_frequency: 20.0
-    # If true, scales all velocity axes proportionally when any axis exceeds limits.
     scale_velocities: False
-    # OPEN_LOOP uses commanded velocity history; CLOSED_LOOP would use odometry feedback.
     feedback: "OPEN_LOOP"
-    max_velocity: [0.4, 0.06, 0.85]   # Mecanum: x, y, theta
-    min_velocity: [-0.4, -0.06, -0.85] # Mecanum: x, y, theta
-    # Axis-wise acceleration limits for x, y, and theta.
-    max_accel: [2.5, 1.5, 2.2]
-    # Axis-wise deceleration limits for x, y, and theta.
-    max_decel: [-2.5, -1.5, -2.2]
-    # Odometry source used when feedback mode needs velocity estimation.
+    max_velocity: [0.26, 0.0, 1.0]
+    min_velocity: [-0.26, 0.0, -1.0]
+    max_accel: [2.5, 0.0, 3.2]
+    max_decel: [-2.5, 0.0, -3.2]
     odom_topic: "/odometry/filtered"
-    # Amount of odometry history in seconds kept for smoothing feedback.
     odom_duration: 0.1
-    # Minimum commanded velocity magnitude per axis before output is clamped to zero.
     deadband_velocity: [0.0, 0.0, 0.0]
-    # Stop publishing if no new cmd_vel is received within this timeout in seconds.
     velocity_timeout: 1.0
