@@ -932,12 +932,16 @@ map_saver:
     use_sim_time: True
     # Maximum time in seconds to wait for map save operations to complete.
     save_map_timeout: 5.0
+    # Map mode: trinary, scale, or raw
+    mode: "trinary"
     # Probability threshold below which a cell is saved as free space.
-    free_thresh_default: 0.25
+    free_thresh: 0.25
     # Probability threshold above which a cell is saved as occupied.
-    occupied_thresh_default: 0.65
+    occupied_thresh: 0.65
     # Subscribe with transient local QoS so late joiners receive the latest map.
     map_subscribe_transient_local: True
+    # Image format for map files: pgm, png, etc.
+    image_format: "pgm"
 
 
 #In general though, the following table is a good guide for the optimal planning plugin for different types of robot bases:

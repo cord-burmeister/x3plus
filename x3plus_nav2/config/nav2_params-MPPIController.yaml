@@ -480,9 +480,21 @@ global_costmap:
 #   ros__parameters:
 #     yaml_filename: ""
 
-map_server:
+map_saver:
   ros__parameters:
     use_sim_time: True
+    # Maximum time in seconds to wait for map save operations to complete.
+    save_map_timeout: 5.0
+    # Map mode: trinary, scale, or raw
+    mode: "trinary"
+    # Probability threshold below which a cell is saved as free space.
+    free_thresh: 0.25
+    # Probability threshold above which a cell is saved as occupied.
+    occupied_thresh: 0.65
+    # Subscribe with transient local QoS so late joiners receive the latest map.
+    map_subscribe_transient_local: True
+    # Image format for map files: pgm, png, etc.
+    image_format: "pgm"
     # Overridden in launch by the "map" launch configuration or provided default value.
     # To use in yaml, remove the default "map" value in the tb3_simulation_launch.py file & provide full path to map below.
     yaml_filename: ""
@@ -606,6 +618,7 @@ velocity_smoother:
 
 collision_monitor:
   ros__parameters:
+    use_sim_time: True
     base_frame_id: "base_footprint"
     odom_frame_id: "odom"
     cmd_vel_in_topic: "cmd_vel_smoothed"
@@ -637,6 +650,7 @@ collision_monitor:
 
 docking_server:
   ros__parameters:
+    use_sim_time: True
     controller_frequency: 50.0
     initial_perception_timeout: 5.0
     wait_charge_timeout: 5.0
@@ -683,6 +697,7 @@ docking_server:
 
 loopback_simulator:
   ros__parameters:
+    use_sim_time: True
     base_frame_id: "base_footprint"
     odom_frame_id: "odom"
     map_frame_id: "map"
