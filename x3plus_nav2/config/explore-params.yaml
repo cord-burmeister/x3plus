@@ -33,13 +33,16 @@
     # Treat frontier goals within this distance as the same goal to avoid
     # rapid retargeting when frontier centroids jitter with map updates.
 
-    # Larger value = stickier goal selection; robot won't switch unless a frontier is truly far from current target.
-    goal_aliasing_distance: 2.5
+    # Larger value = stickier goal selection; robot won't switch unless a frontier 
+    # is truly far from current target.
+    # Too large value = robot won't switch to better nearby frontiers, so tune carefully.
+    # default = `0.01`
+    goal_aliasing_distance: 0.1
     # Used for weighting frontiers. This multiplicative parameter affects frontier gain component of 
     # the frontier weight (frontier size).
     # default = `1.0`
     # Lower value = frontier size matters less, so nearby small frontiers can still win
-    gain_scale: 0.05
+    gain_scale: 1.0
     # Transform tolerance to use when transforming robot pose.
     # default = `0.3`
     transform_tolerance: 0.3
