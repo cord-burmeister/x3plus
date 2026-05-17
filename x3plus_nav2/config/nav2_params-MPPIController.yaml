@@ -85,6 +85,7 @@ bt_navigator:
 controller_server:
   ros__parameters:
     use_sim_time: True
+    verbose: false
     controller_frequency: 20.0
     costmap_update_timeout: 0.30
     min_x_velocity_threshold: 0.001
@@ -99,6 +100,7 @@ controller_server:
     # progress_checker_plugins: List of progress checker plugin names to load.
     progress_checker_plugins: ["progress_checker"]
     goal_checker_plugins: ["general_goal_checker"] # "precise_goal_checker"
+    current_goal_checker: "general_goal_checker"
     controller_plugins: ["FollowPath"]
     use_realtime_priority: false
     odom_topic: "/odometry/filtered"
@@ -251,7 +253,6 @@ controller_server:
         # Distance (m) near goal to stop applying preferential obstacle term to allow robot to smoothly converge to goal pose in close proximity to obstacles
         near_goal_distance: 0.70
         # Exponential decay factor across inflation radius. This should be the same as for your inflation layer (Humble only)
-        cost_scaling_factor: 3.0
         cost_scaling_factor: 3.0
         # Radius to inflate costmap around lethal obstacles. This should be the same as for your inflation layer (Humble only)
         # Set to 0.3m for desired wall clearance
@@ -544,8 +545,12 @@ planner_server:
       # Higher values bias the global path toward lower-cost center space in corridors/corners.
       cost_travel_multiplier: 4.0
       # Whether to allow planning in unknown space.
-      allow_unknown: false
-
+      # Frontier exploration typically proposes goals near unknown boundaries, so a goal can easily 
+      # end up in unknown/blocked cells from the planner’s perspective.
+      # This is true for explore lite, because it generates goals in frontiers which are on the boundary of unknown space. 
+      # If the planner does not allow unknown space, then it will see those goals as blocked and fail to generate a plan to them.
+      # allow_unknown: true
+      allow_unknown: true
 smoother_server:
   ros__parameters:
     use_sim_time: True
@@ -703,3 +708,261 @@ loopback_simulator:
     map_frame_id: "map"
     scan_frame_id: "base_scan"  # tb4_loopback_simulator.launch.py remaps to 'rplidar_link'
     update_duration: 0.02
+
+slam_toolbox:
+  ros__parameters:
+    # Time source for simulation/recorded playback.
+    # Default: false | Range: {true,false} | Impact: true keeps SLAM synchronized to /clock.
+    use_sim_time: True
+
+    # ------------------------------
+    # Core solver plugin parameters
+    # ------------------------------
+    # Nonlinear backend for pose-graph optimization.
+    # Default: solver_plugins::CeresSolver | Range: {solver_plugins::CeresSolver, solver_plugins::SpaSolver, solver_plugins::G2oSolver} | Impact: changes optimizer speed/robustness.
+    solver_plugin: solver_plugins::CeresSolver
+    # Ceres linear system solver.
+    # Default: SPARSE_NORMAL_CHOLESKY | Range: {SPARSE_NORMAL_CHOLESKY, SPARSE_SCHUR, ITERATIVE_SCHUR, CGNR} | Impact: major effect on optimization runtime and memory.
+    ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+    # Preconditioner for iterative linear solves.
+    # Default: JACOBI | Range: {JACOBI, IDENTITY, SCHUR_JACOBI} | Impact: can improve convergence speed and stability.
+    ceres_preconditioner: SCHUR_JACOBI
+    # Trust-region strategy in Ceres.
+    # Default: LEVENBERG_MARQUARDT | Range: {LEVENBERG_MARQUARDT, DOGLEG} | Impact: affects convergence behavior in difficult loop closures.
+    ceres_trust_strategy: LEVENBERG_MARQUARDT
+    # Dogleg variant (used only when ceres_trust_strategy=DOGLEG).
+    # Default: TRADITIONAL_DOGLEG | Range: {TRADITIONAL_DOGLEG, SUBSPACE_DOGLEG} | Impact: small runtime/robustness trade-off when DOGLEG is used.
+    ceres_dogleg_type: TRADITIONAL_DOGLEG
+    # Robust loss function for outlier rejection.
+    # Default: None | Range: {None, HuberLoss, CauchyLoss} | Impact: stronger outlier rejection can reduce false loop closures.
+    ceres_loss_function: None
+
+    # ------------------------------
+    # ROS interface / frame settings
+    # ------------------------------
+    # Odometry frame id.
+    # Default: odom | Range: valid TF frame string | Impact: must match TF tree or scan matching fails.
+    odom_frame: odom
+    # Map frame id.
+    # Default: map | Range: valid TF frame string | Impact: global map frame used by Nav2 and RViz.
+    map_frame: map
+    # Robot base frame id.
+    # Default: base_footprint (upstream), often base_link in robot stacks | Range: valid TF frame string | Impact: wrong value causes transform lookup errors.
+    base_frame: base_link
+    # Laser scan topic (prefer absolute topic path).
+    # Default: /scan | Range: valid topic name | Impact: wrong topic means no scans processed.
+    scan_topic: /scan
+    # slam_toolbox operating mode.
+    # Default: mapping | Range: {mapping, localization} | Impact: localization avoids map growth and favors relocalization.
+    mode: mapping
+    # Published occupancy grid topic name.
+    # Default: /map | Range: valid topic name | Impact: must align with consumers expecting the map topic.
+    map_name: /map
+    # Enable built-in map saver services/subscriptions.
+    # Default: true | Range: {true,false} | Impact: disables map saver endpoints when false.
+    use_map_saver: true
+    # Enable Nav2 lifecycle bond integration.
+    # Default: false | Range: {true,false} | Impact: set true when using lifecycle manager supervision.
+    use_lifecycle_manager: false
+
+    # ---------------------------------------
+    # Startup pose-graph load / localization
+    # ---------------------------------------
+    # Serialized pose-graph file to load at startup.
+    # Default: "" | Range: existing file path string | Impact: enables continued mapping/localization from prior session.
+    map_file_name: ""
+    # Starting pose [x, y, yaw] used with map_file_name.
+    # Default: [] | Range: [] or [x,y,yaw] | Impact: improves startup relocalization when approximate pose is known.
+    map_start_pose: []
+    # Start from first node (dock) in loaded graph when no explicit map_start_pose is provided.
+    # Default: false | Range: {true,false} | Impact: controls deterministic startup anchor for loaded maps.
+    map_start_at_dock: false
+
+    # ------------------------------
+    # Runtime / timing parameters
+    # ------------------------------
+    # Enable verbose debug logs.
+    # Default: false | Range: {true,false} | Impact: useful for tuning, but increases log volume/CPU.
+    debug_logging: false
+    # Process every Nth scan (scan throttling).
+    # Default: 1 | Range: integer >= 1 | Impact: larger values reduce CPU but may degrade map quality.
+    throttle_scans: 1
+    # Message filter queue size for incoming scans.
+    # Default: 1 | Range: integer >= 1 | Impact: larger queue tolerates latency but can increase delay.
+    scan_queue_size: 1
+    # Period for publishing map->odom transform; 0 disables publishing.
+    # Default: 0.05 (upstream), common tuned value 0.02 | Range: >= 0.0 s | Impact: lower period gives fresher TF at higher CPU cost.
+    transform_publish_period: 0.02
+    # Occupancy map publication/update interval.
+    # Default: 5.0 | Range: > 0.0 s | Impact: lower value yields fresher map output with more CPU usage.
+    map_update_interval: 5.0
+    # Output map resolution in meters/cell.
+    # Default: 0.05 | Range: > 0.0 | Impact: smaller value gives finer detail with higher memory/CPU.
+    resolution: 0.05
+    # Minimum laser range used for rasterization/filtering.
+    # Default: 0.0 (typical) | Range: >= sensor min range | Impact: too low accepts invalid near returns; too high removes valid close obstacles.
+    min_laser_range: 0.1
+    # Maximum laser range used for rasterization/filtering.
+    # Default: 10.0 (sample), sensor-dependent | Range: <= sensor max range | Impact: too high introduces noisy far hits; too low truncates map extent.
+    max_laser_range: 16.0
+    # Minimum time between accepted scans.
+    # Default: 0.0-0.5 (depends on config) | Range: >= 0.0 s | Impact: higher values reduce CPU and update rate.
+    minimum_time_interval: 0.5
+    # TF lookup timeout.
+    # Default: 0.5 | Range: >= 0.0 s | Impact: higher values tolerate TF lag but can add processing latency.
+    transform_timeout: 0.2
+    # TF history buffer duration.
+    # Default: 30.0 | Range: > 0.0 s | Impact: larger buffers help delayed lookups and bag replay at memory cost.
+    tf_buffer_duration: 30.0
+    # Process stack size override in bytes (read-only at runtime).
+    # Default: 40000000 | Range: integer > 0 | Impact: larger value prevents serialization stack overflows on large maps.
+    stack_size_to_use: 40000000
+    # Keep interactive RViz editing caches in memory.
+    # Default: false (upstream), often enabled in mapping configs | Range: {true,false} | Impact: true increases memory, enables richer interactive editing.
+    enable_interactive_mode: true
+    # Restamp map->odom TF with now() instead of scan stamp.
+    # Default: false | Range: {true,false} | Impact: can reduce stale TF issues; may mask timestamp inconsistencies.
+    restamp_tf: false
+
+    # Pose covariance scaling for downstream fusion.
+    # Default: 1.0 | Range: > 0.0 | Impact: higher values reduce downstream trust in scan-matched position.
+    position_covariance_scale: 1.0
+    # Yaw covariance scaling for downstream fusion.
+    # Default: 1.0 | Range: > 0.0 | Impact: higher values reduce downstream trust in scan-matched heading.
+    yaw_covariance_scale: 1.0
+    # Use precise min distance/heading checks instead of faster approximations.
+    # Default: false | Range: {true,false} | Impact: true improves trigger accuracy with slight compute overhead.
+    check_min_dist_and_heading_precisely: false
+
+    # ------------------------------
+    # Scan matcher / graph controls
+    # ------------------------------
+    # Enable scan matching refinement on top of odometry.
+    # Default: true | Range: {true,false} | Impact: disabling reduces CPU but significantly hurts map quality.
+    use_scan_matching: true
+    # Use scan barycenter pose estimate.
+    # Default: true | Range: {true,false} | Impact: can improve matching stability on some sensor geometries.
+    use_scan_barycenter: true
+    # Minimum translation before processing next scan.
+    # Default: 0.5 | Range: >= 0.0 m | Impact: lower value increases map detail and CPU.
+    minimum_travel_distance: 0.5
+    # Minimum heading change before processing next scan.
+    # Default: 0.5 | Range: >= 0.0 rad | Impact: lower value increases rotational detail and CPU.
+    minimum_travel_heading: 0.5
+    # Number of scans retained in local buffer.
+    # Default: 10 | Range: integer >= 1 | Impact: larger buffer helps loop opportunities but raises memory/compute.
+    scan_buffer_size: 10
+    # Maximum distance for scans to remain in local buffer.
+    # Default: 10.0 | Range: > 0.0 m | Impact: larger values keep broader context and can slow matching.
+    scan_buffer_maximum_scan_distance: 10.0
+    # Fine match response threshold for linking scans.
+    # Default: 0.1 | Range: typically 0.0-1.0 | Impact: higher values are stricter and reduce false links.
+    link_match_minimum_response_fine: 0.1
+    # Max distance between linked scans.
+    # Default: 1.5 | Range: > 0.0 m | Impact: larger values permit wider links but can admit wrong associations.
+    link_scan_maximum_distance: 1.5
+    # Radius for loop-closure candidate search.
+    # Default: 3.0 | Range: > 0.0 m | Impact: larger radius finds more loops but increases false-positive risk/CPU.
+    loop_search_maximum_distance: 3.0
+    # Enable loop closure.
+    # Default: true | Range: {true,false} | Impact: disabling speeds runtime but loses global consistency correction.
+    do_loop_closing: true
+    # Minimum chain length for loop closure evaluation.
+    # Default: 10 | Range: integer >= 1 | Impact: higher values are safer but may miss short valid loops.
+    loop_match_minimum_chain_size: 10
+    # Coarse variance threshold before refinement.
+    # Default: 3.0 | Range: > 0.0 | Impact: lower values are stricter and reduce dubious loop candidates.
+    loop_match_maximum_variance_coarse: 3.0
+    # Coarse response threshold before refinement.
+    # Default: 0.35 | Range: typically 0.0-1.0 | Impact: higher values reject weak coarse loop matches.
+    loop_match_minimum_response_coarse: 0.35
+    # Fine response threshold for loop acceptance.
+    # Default: 0.45 | Range: typically 0.0-1.0 | Impact: higher values reduce false loop closures.
+    loop_match_minimum_response_fine: 0.45
+
+    # ---------------------------------
+    # Correlation search configuration
+    # ---------------------------------
+    # Correlation search grid size.
+    # Default: 0.5 | Range: > 0.0 m | Impact: larger dimension improves capture range at higher CPU cost.
+    correlation_search_space_dimension: 0.5
+    # Correlation search grid resolution.
+    # Default: 0.01 | Range: > 0.0 m | Impact: finer resolution improves precision but increases compute.
+    correlation_search_space_resolution: 0.01
+    # Smearing sigma for correlation response.
+    # Default: 0.1 | Range: > 0.0 | Impact: larger values smooth noise but can blur sharp matches.
+    correlation_search_space_smear_deviation: 0.1
+
+    # Loop-closure correlation search grid size.
+    # Default: 8.0 | Range: > 0.0 m | Impact: larger values tolerate larger drift with more compute.
+    loop_search_space_dimension: 8.0
+    # Loop-closure grid resolution.
+    # Default: 0.05 | Range: > 0.0 m | Impact: finer resolution improves closure precision at CPU cost.
+    loop_search_space_resolution: 0.05
+    # Loop-closure response smearing sigma.
+    # Default: 0.03 | Range: > 0.0 | Impact: tuning balances robustness vs sharpness for loop scoring.
+    loop_search_space_smear_deviation: 0.03
+
+    # ------------------------------
+    # Matcher penalty / angle tuning
+    # ------------------------------
+    # Translation penalty away from odometric prior.
+    # Default: 0.5 | Range: >= 0.0 | Impact: higher values trust odometry more.
+    distance_variance_penalty: 0.5
+    # Angular penalty away from odometric prior.
+    # Default: 1.0 | Range: >= 0.0 | Impact: higher values constrain heading correction.
+    angle_variance_penalty: 1.0
+    # Fine matching angular search half-window.
+    # Default: 0.00349 | Range: > 0.0 rad | Impact: wider range helps recover from drift but increases ambiguity.
+    fine_search_angle_offset: 0.00349
+    # Coarse matching angular search half-window.
+    # Default: 0.349 | Range: > 0.0 rad | Impact: wider range aids large-rotation recovery at more CPU cost.
+    coarse_search_angle_offset: 0.349
+    # Coarse angular discretization step.
+    # Default: 0.0349 | Range: > 0.0 rad | Impact: smaller step improves precision with higher compute.
+    coarse_angle_resolution: 0.0349
+    # Lower bound on angular penalty term.
+    # Default: 0.9 | Range: > 0.0 | Impact: prevents unstable overconfidence in angular matches.
+    minimum_angle_penalty: 0.9
+    # Lower bound on distance penalty term.
+    # Default: 0.5 | Range: > 0.0 | Impact: prevents unstable overconfidence in translational matches.
+    minimum_distance_penalty: 0.5
+    # Expand response search when no viable match is found.
+    # Default: true | Range: {true,false} | Impact: improves robustness in hard scenes at extra compute.
+    use_response_expansion: true
+
+    # ----------------------------------------------
+    # Optional experimental node-type-only parameters
+    # ----------------------------------------------
+    # Enable KD-tree-assisted lifelong search (lifelong node only).
+    # Default: false | Range: {true,false} | Impact: can improve lifelong association scalability.
+    lifelong_search_use_tree: false
+    # Minimum score to accept lifelong candidate.
+    # Default: 0.10 | Range: 0.0-1.0 | Impact: higher value is stricter and reduces false lifelong links.
+    lifelong_minimum_score: 0.10
+    # IoU threshold for lifelong match acceptance.
+    # Default: 0.85 | Range: 0.0-1.0 | Impact: higher threshold favors conservative node reuse.
+    lifelong_iou_match: 0.85
+    # Score threshold for lifelong node removal.
+    # Default: 0.10 | Range: 0.0-1.0 | Impact: higher value prunes nodes more aggressively.
+    lifelong_node_removal_score: 0.10
+    # Overlap score scaling in lifelong optimization.
+    # Default: 0.5 | Range: >= 0.0 | Impact: tunes weight of overlap term when pruning/keeping nodes.
+    lifelong_overlap_score_scale: 0.5
+    # Constraint multiplier for lifelong graph terms.
+    # Default: 0.05 | Range: >= 0.0 | Impact: larger values increase lifelong constraint influence.
+    lifelong_constraint_multiplier: 0.05
+    # Nearby candidate penalty for lifelong mode.
+    # Default: 0.001 | Range: >= 0.0 | Impact: higher values discourage very-near duplicate insertions.
+    lifelong_nearby_penalty: 0.001
+    # Candidate scaling factor for lifelong selection.
+    # Default: 0.03 | Range: >= 0.0 | Impact: changes number/distribution of lifelong candidates.
+    lifelong_candidates_scale: 0.03
+
+    # Start map-and-localization node in localization mode (map_and_localization node only).
+    # Default: false | Range: {true,false} | Impact: true skips immediate mapping expansion on startup.
+    localization_on_configure: false
+
+    # Decentralized multi-robot scan sharing topic (decentralized node only).
+    # Default: /localized_scan | Range: valid topic name | Impact: controls inter-robot scan exchange channel.
+    scan_share_topic: /localized_scan
