@@ -64,7 +64,7 @@ frontier_explorer:
     autostart: true
 
     # Keep the optional runtime control service available for manual stop/start flows.
-    control_service_enabled: false
+    control_service_enabled: true
 
     # Publish a completion event so product-specific integrations can react outside the package.
     completion_event_enabled: true
