@@ -16,6 +16,15 @@ Automatically saves maps from the Nav2 map server at regular intervals with time
 ./periodic_map_saver.sh [INTERVAL_MINUTES] [OUTPUT_DIR] [MAP_TOPIC] [MAP_SAVER_SERVICE]
 ```
 
+Optional environment variables:
+
+```bash
+MAP_MODE=trinary          # trinary | scale | raw
+FREE_THRESH=0.25          # [0.0..1.0]
+OCC_THRESH=0.65           # [0.0..1.0]
+IMAGE_FORMAT=pgm          # pgm | png | bmp
+```
+
 ### Parameters
 
 | Parameter | Default | Description |
@@ -24,6 +33,10 @@ Automatically saves maps from the Nav2 map server at regular intervals with time
 | `OUTPUT_DIR` | `.` (current dir) | Directory to save map files |
 | `MAP_TOPIC` | `map` | ROS topic name of the map |
 | `MAP_SAVER_SERVICE` | `/map_saver/save_map` | Nav2 map saver service name |
+
+The script now sends `image_format`, `map_mode`, `free_thresh`, and
+`occupied_thresh` in each save request so `map_saver` does not need to fall
+back to defaults.
 
 ### Examples
 
@@ -43,6 +56,12 @@ Automatically saves maps from the Nav2 map server at regular intervals with time
 
 ```bash
 ./periodic_map_saver.sh 2 /home/user/my_maps custom_map /my_custom_map_saver
+```
+
+**Use `png` output and `scale` map mode:**
+
+```bash
+IMAGE_FORMAT=png MAP_MODE=scale ./periodic_map_saver.sh 5 ./maps
 ```
 
 ### Output
