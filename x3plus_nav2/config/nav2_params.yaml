@@ -211,6 +211,7 @@ controller_server:
     # Active goal checker plugin IDs.
     # Impact: chooses the criteria for declaring a goal reached.
     goal_checker_plugins: [general_goal_checker]   # "precise_goal_checker"
+    current_goal_checker: general_goal_checker
     # Active local controller plugin IDs.
     # Impact: selects the algorithm stack used to generate cmd_vel.
     controller_plugins: ["FollowPath"]

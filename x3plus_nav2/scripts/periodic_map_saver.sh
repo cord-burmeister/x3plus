@@ -3,7 +3,7 @@
 # Periodic Map Saver for ROS 2 Nav2
 # This script saves maps from the Nav2 map server at regular intervals with timestamped filenames
 
-set -e  # Exit on error
+# Do not use set -e; timeout returns exit code 124 which would terminate the script
 
 # Default values
 INTERVAL_MINUTES=${1:-5}           # Interval between map saves (default 5 minutes)
@@ -14,6 +14,7 @@ MAP_MODE=${MAP_MODE:-trinary}      # Map mode: trinary, scale, raw
 FREE_THRESH=${FREE_THRESH:-0.25}   # Free-space threshold [0.0..1.0]
 OCC_THRESH=${OCC_THRESH:-0.65}     # Occupied-space threshold [0.0..1.0]
 IMAGE_FORMAT=${IMAGE_FORMAT:-pgm}  # Image format: pgm, png, bmp
+SAVE_TIMEOUT=${SAVE_TIMEOUT:-30}   # Timeout in seconds for map save service call
 
 # Validate interval is a positive number
 if ! [[ "$INTERVAL_MINUTES" =~ ^[0-9]+$ ]] || [ "$INTERVAL_MINUTES" -le 0 ]; then
@@ -48,6 +49,7 @@ echo "Map mode: $MAP_MODE"
 echo "Free threshold: $FREE_THRESH"
 echo "Occupied threshold: $OCC_THRESH"
 echo "Image format: $IMAGE_FORMAT"
+echo "Save timeout: ${SAVE_TIMEOUT}s"
 echo "======================================================"
 echo ""
 
@@ -61,14 +63,14 @@ while true; do
     
     # Call the map saver service
     # The service saves both .pgm and .yaml files
-    if ros2 service call "$MAP_SAVER_SERVICE" nav2_msgs/srv/SaveMap "{map_topic: '$MAP_TOPIC', map_url: '$MAP_FILEPATH', image_format: '$IMAGE_FORMAT', map_mode: '$MAP_MODE', free_thresh: $FREE_THRESH, occupied_thresh: $OCC_THRESH}" > /dev/null 2>&1; then
+    if timeout "$SAVE_TIMEOUT" ros2 service call "$MAP_SAVER_SERVICE" nav2_msgs/srv/SaveMap "{map_topic: '$MAP_TOPIC', map_url: '$MAP_FILEPATH', image_format: '$IMAGE_FORMAT', map_mode: '$MAP_MODE', free_thresh: $FREE_THRESH, occupied_thresh: $OCC_THRESH}" > /dev/null 2>&1; then
         if [ -f "${MAP_FILEPATH}.pgm" ] && [ -f "${MAP_FILEPATH}.yaml" ]; then
             FILE_SIZE_PGM=$(du -h "${MAP_FILEPATH}.pgm" | cut -f1)
             echo "  ✓ Success: Map saved (${MAP_FILEPATH}.pgm: $FILE_SIZE_PGM, ${MAP_FILEPATH}.yaml)"
         else
             echo "  ⚠ Service call succeeded but files not found. Checking service response..."
             # Try alternative call format for different Nav2 versions
-            if ros2 service call "$MAP_SAVER_SERVICE" nav2_msgs/srv/SaveMap "{map_url: '$MAP_FILEPATH', image_format: '$IMAGE_FORMAT', map_mode: '$MAP_MODE', free_thresh: $FREE_THRESH, occupied_thresh: $OCC_THRESH}" > /dev/null 2>&1; then
+            if timeout "$SAVE_TIMEOUT" ros2 service call "$MAP_SAVER_SERVICE" nav2_msgs/srv/SaveMap "{map_url: '$MAP_FILEPATH', image_format: '$IMAGE_FORMAT', map_mode: '$MAP_MODE', free_thresh: $FREE_THRESH, occupied_thresh: $OCC_THRESH}" > /dev/null 2>&1; then
                 if [ -f "${MAP_FILEPATH}.pgm" ]; then
                     echo "  ✓ Success: Map saved (alternative format)"
                 else
@@ -79,9 +81,14 @@ while true; do
             fi
         fi
     else
-        echo "  ✗ Failed: Could not call $MAP_SAVER_SERVICE"
-        echo "  Ensure the map_saver node is running and the service is available."
-        echo "  Check with: ros2 service list | grep map_saver"
+        EXIT_CODE=$?
+        if [ $EXIT_CODE -eq 124 ]; then
+            echo "  ✗ Timeout: Map save did not complete within ${SAVE_TIMEOUT}s"
+        else
+            echo "  ✗ Failed: Could not call $MAP_SAVER_SERVICE"
+            echo "  Ensure the map_saver node is running and the service is available."
+            echo "  Check with: ros2 service list | grep map_saver"
+        fi
     fi
     
     echo "  Waiting $INTERVAL_MINUTES minutes until next save..."

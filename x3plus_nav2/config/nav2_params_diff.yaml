@@ -189,6 +189,7 @@ controller_server:
     failure_tolerance: 0.6
     progress_checker_plugin: progress_checker
     goal_checker_plugins: [general_goal_checker]   # "precise_goal_checker"
+    current_goal_checker: general_goal_checker
     controller_plugins: ["FollowPath"]
 
     # Progress checker parameters

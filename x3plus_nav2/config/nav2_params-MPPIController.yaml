@@ -58,7 +58,7 @@ bt_navigator:
   ros__parameters:
     use_sim_time: True
     global_frame: map
-    robot_base_frame: base_link
+    robot_base_frame: base_footprint
     odom_topic: "/odometry/filtered"
     bt_loop_duration: 10
     default_server_timeout: 20
@@ -225,7 +225,7 @@ controller_server:
         min_turning_r: 0.5
       # Default: None. Critics (plugins) names
       critics: [
-        "ConstraintCritic", "CostCritic", "GoalCritic",
+        "ConstraintCritic", "CostCritic", "ObstaclesCritic", "GoalCritic",
         "GoalAngleCritic", "PathAlignCritic", "PathFollowCritic",
         "PathAngleCritic", "PreferForwardCritic"]
       # ----------------------------------------------------------------------------------------------------
@@ -234,12 +234,12 @@ controller_server:
       ObstaclesCritic:
         # Weight to apply to critic for near collisions closer than collision_margin_distance to prevent near collisions only 
         # as a method of virtually inflating the footprint. This should not be used to generally influence obstacle avoidance away from critical collisions.
-        critical_weight: 20 
+        critical_weight: 20.0 
         # Weight to apply to critic for generally preferring routes in lower cost space. This is separated from the critical term to allow
         #  for fine tuning of obstacle behaviors with path alignment for dynamic scenes without impacting actions which may directly lead to near-collisions. 
         # This is applied within the inflation_radius distance from obstacles.
-        # Increased for stronger wall avoidance at 0.3m clearance
-        repulsion_weight: 1.0
+        # Increased for stronger wall avoidance in narrow indoor spaces.
+        repulsion_weight: 2.0
         # Power order to apply to term.
         cost_power: 1
         # Whether to use point cost (if robot is circular or low compute power) or compute SE2 footprint cost.
@@ -249,14 +249,14 @@ controller_server:
         # Margin distance (m) from collision to apply severe penalty, similar to footprint inflation. Between 0.05-0.2 is reasonable. 
         # Note that it will highly influence the controller not to enter spaces more confined than this, so ensure this parameter 
         # is set lower than the narrowest you expect the robot to need to traverse through.
-        collision_margin_distance: 0.08
+        collision_margin_distance: 0.12
         # Distance (m) near goal to stop applying preferential obstacle term to allow robot to smoothly converge to goal pose in close proximity to obstacles
         near_goal_distance: 0.70
         # Exponential decay factor across inflation radius. This should be the same as for your inflation layer (Humble only)
-        cost_scaling_factor: 3.0
+        cost_scaling_factor: 2.0
         # Radius to inflate costmap around lethal obstacles. This should be the same as for your inflation layer (Humble only)
-        # Set to 0.3m for desired wall clearance
-        inflation_radius: 0.3
+        # Match the costmap inflation settings to keep behavior consistent.
+        inflation_radius: 0.45
         # Name of the inflation layer. If empty, it uses the last inflation layer in the costmap. If you have multiple inflation layers, 
         # you may want to specify the name of the layer to use.'
         # inflation_layer_name: ""
@@ -311,12 +311,11 @@ controller_server:
         # consider_footprint: False # Default: False. Whether to use point cost (if robot is circular or low compute power) or compute SE2 footprint cost.
         # Default 1. Power order to apply to term.
         cost_power: 1
-        # Default 3.81. Wight to apply to critic to avoid obstacles.
-        cost_weight: 1.0
+        # Default 3.81. Weight to apply to critic to avoid obstacles.
+        cost_weight: 3.0
         # Default 300.0. Cost to apply to a pose with any point in in inflated space to prefer distance from obstacles.
         critical_cost: 300.0
         # Default: False. Whether to use point cost (if robot is circular or low compute power) or compute SE2 footprint cost.
-        consider_footprint: true
         consider_footprint: true
         # Default 1000000.0. Cost to apply to a true collision in a trajectory.
         collision_cost: 1000000.0
@@ -412,11 +411,12 @@ local_costmap:
       plugins: ["voxel_layer", "inflation_layer"]
       inflation_layer:
           plugin: "nav2_costmap_2d::InflationLayer"
-          cost_scaling_factor: 3.0
-          inflation_radius: 0.3
+          cost_scaling_factor: 2.0
+          inflation_radius: 0.45
       voxel_layer:
         plugin: "nav2_costmap_2d::VoxelLayer"
         enabled: True
+        footprint_clearing_enabled: True
         publish_voxel_map: True
         origin_z: 0.0
         z_resolution: 0.05
@@ -431,9 +431,9 @@ local_costmap:
           marking: True
           data_type: "LaserScan"
           raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
+          raytrace_min_range: 0.08
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          obstacle_min_range: 0.08
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
@@ -446,7 +446,7 @@ global_costmap:
       update_frequency: 1.0
       publish_frequency: 1.0
       global_frame: map
-      robot_base_frame: base_link
+      robot_base_frame: base_footprint
       footprint: "[[0.16, -0.13], [0.16, 0.13], [-0.16, 0.13], [-0.16, -0.13]]"
       resolution: 0.05
       track_unknown_space: true
@@ -454,6 +454,7 @@ global_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
+        footprint_clearing_enabled: True
         observation_sources: scan
         scan:
           topic: /scan
@@ -462,16 +463,16 @@ global_costmap:
           marking: True
           data_type: "LaserScan"
           raytrace_max_range: 3.0
-          raytrace_min_range: 0.0
+          raytrace_min_range: 0.08
           obstacle_max_range: 2.5
-          obstacle_min_range: 0.0
+          obstacle_min_range: 0.08
       static_layer:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 4.0
-        inflation_radius: 0.5
+        cost_scaling_factor: 2.0
+        inflation_radius: 0.45
       always_send_full_costmap: True
 
 # The yaml_filename does not need to be specified since it going to be set by defaults in launch.
@@ -480,6 +481,12 @@ global_costmap:
 # map_server:
 #   ros__parameters:
 #     yaml_filename: ""
+
+map_server:
+  ros__parameters:
+    use_sim_time: True
+    # Keep empty here; nav2_bringup rewrites this from the launch 'map' argument.
+    yaml_filename: ""
 
 map_saver:
   ros__parameters:
@@ -499,15 +506,6 @@ map_saver:
     # Overridden in launch by the "map" launch configuration or provided default value.
     # To use in yaml, remove the default "map" value in the tb3_simulation_launch.py file & provide full path to map below.
     yaml_filename: ""
-
-map_saver:
-  ros__parameters:
-    use_sim_time: True
-    save_map_timeout: 5.0
-    free_thresh_default: 0.25
-    occupied_thresh_default: 0.65
-    map_subscribe_transient_local: True
-
 
 #In general though, the following table is a good guide for the optimal planning plugin for different types of robot bases:
 # Plugin Name                 Supported Robot Types
@@ -534,7 +532,7 @@ planner_server:
       # Smac 2D global planner for circular differential/omni robots.
       plugin: "nav2_smac_planner/SmacPlanner2D"
       # Tolerance in meters between requested goal pose and end of path.
-      tolerance: 0.2
+      tolerance: 0.35
       # Keep full-resolution planning for tighter indoor path quality.
       downsample_costmap: false
       downsampling_factor: 1
@@ -543,7 +541,7 @@ planner_server:
       max_on_approach_iterations: 1000
       terminal_checking_interval: 5000
       # Higher values bias the global path toward lower-cost center space in corridors/corners.
-      cost_travel_multiplier: 4.0
+      cost_travel_multiplier: 6.0
       # Whether to allow planning in unknown space.
       # Frontier exploration typically proposes goals near unknown boundaries, so a goal can easily 
       # end up in unknown/blocked cells from the planner’s perspective.
@@ -578,7 +576,7 @@ behavior_server:
     assisted_teleop:
       plugin: "nav2_behaviors/AssistedTeleop"
     global_frame: odom
-    robot_base_frame: base_link
+    robot_base_frame: base_footprint
     transform_tolerance: 0.1
     use_sim_time: true
     simulate_ahead_time: 2.0
@@ -663,7 +661,7 @@ docking_server:
     undock_linear_tolerance: 0.05
     undock_angular_tolerance: 0.1
     max_retries: 3
-    base_frame: "base_link"
+    base_frame: "base_footprint"
     fixed_frame: "odom"
     dock_backwards: false
     dock_prestaging_tolerance: 0.5
@@ -735,7 +733,7 @@ slam_toolbox:
     ceres_dogleg_type: TRADITIONAL_DOGLEG
     # Robust loss function for outlier rejection.
     # Default: None | Range: {None, HuberLoss, CauchyLoss} | Impact: stronger outlier rejection can reduce false loop closures.
-    ceres_loss_function: None
+    ceres_loss_function: HuberLoss
 
     # ------------------------------
     # ROS interface / frame settings
@@ -748,7 +746,7 @@ slam_toolbox:
     map_frame: map
     # Robot base frame id.
     # Default: base_footprint (upstream), often base_link in robot stacks | Range: valid TF frame string | Impact: wrong value causes transform lookup errors.
-    base_frame: base_link
+    base_frame: base_footprint
     # Laser scan topic (prefer absolute topic path).
     # Default: /scan | Range: valid topic name | Impact: wrong topic means no scans processed.
     scan_topic: /scan
@@ -773,7 +771,7 @@ slam_toolbox:
     map_file_name: ""
     # Starting pose [x, y, yaw] used with map_file_name.
     # Default: [] | Range: [] or [x,y,yaw] | Impact: improves startup relocalization when approximate pose is known.
-    map_start_pose: []
+    map_start_pose: [0.0, 0.0, 0.0]
     # Start from first node (dock) in loaded graph when no explicit map_start_pose is provided.
     # Default: false | Range: {true,false} | Impact: controls deterministic startup anchor for loaded maps.
     map_start_at_dock: false
@@ -798,16 +796,16 @@ slam_toolbox:
     map_update_interval: 5.0
     # Output map resolution in meters/cell.
     # Default: 0.05 | Range: > 0.0 | Impact: smaller value gives finer detail with higher memory/CPU.
-    resolution: 0.05
+    resolution: 0.025
     # Minimum laser range used for rasterization/filtering.
     # Default: 0.0 (typical) | Range: >= sensor min range | Impact: too low accepts invalid near returns; too high removes valid close obstacles.
     min_laser_range: 0.1
     # Maximum laser range used for rasterization/filtering.
     # Default: 10.0 (sample), sensor-dependent | Range: <= sensor max range | Impact: too high introduces noisy far hits; too low truncates map extent.
-    max_laser_range: 16.0
+    max_laser_range: 10.0
     # Minimum time between accepted scans.
     # Default: 0.0-0.5 (depends on config) | Range: >= 0.0 s | Impact: higher values reduce CPU and update rate.
-    minimum_time_interval: 0.5
+    minimum_time_interval: 0.15
     # TF lookup timeout.
     # Default: 0.5 | Range: >= 0.0 s | Impact: higher values tolerate TF lag but can add processing latency.
     transform_timeout: 0.2
@@ -845,25 +843,26 @@ slam_toolbox:
     use_scan_barycenter: true
     # Minimum translation before processing next scan.
     # Default: 0.5 | Range: >= 0.0 m | Impact: lower value increases map detail and CPU.
-    minimum_travel_distance: 0.5
+    minimum_travel_distance: 0.10
     # Minimum heading change before processing next scan.
     # Default: 0.5 | Range: >= 0.0 rad | Impact: lower value increases rotational detail and CPU.
-    minimum_travel_heading: 0.5
+    minimum_travel_heading: 0.11
     # Number of scans retained in local buffer.
     # Default: 10 | Range: integer >= 1 | Impact: larger buffer helps loop opportunities but raises memory/compute.
-    scan_buffer_size: 10
+    scan_buffer_size: 40
     # Maximum distance for scans to remain in local buffer.
     # Default: 10.0 | Range: > 0.0 m | Impact: larger values keep broader context and can slow matching.
-    scan_buffer_maximum_scan_distance: 10.0
+    scan_buffer_maximum_scan_distance: 20.0
     # Fine match response threshold for linking scans.
     # Default: 0.1 | Range: typically 0.0-1.0 | Impact: higher values are stricter and reduce false links.
-    link_match_minimum_response_fine: 0.1
+    link_match_minimum_response_fine: 0.2
     # Max distance between linked scans.
     # Default: 1.5 | Range: > 0.0 m | Impact: larger values permit wider links but can admit wrong associations.
     link_scan_maximum_distance: 1.5
     # Radius for loop-closure candidate search.
     # Default: 3.0 | Range: > 0.0 m | Impact: larger radius finds more loops but increases false-positive risk/CPU.
-    loop_search_maximum_distance: 3.0
+    # Increase this distance (e.g., to 5.0 or 8.0 meters). It sets the maximum distance threshold between a current pose and previous graph nodes to even consider them for loop closure.
+    loop_search_maximum_distance: 5.0
     # Enable loop closure.
     # Default: true | Range: {true,false} | Impact: disabling speeds runtime but loses global consistency correction.
     do_loop_closing: true
@@ -875,10 +874,17 @@ slam_toolbox:
     loop_match_maximum_variance_coarse: 3.0
     # Coarse response threshold before refinement.
     # Default: 0.35 | Range: typically 0.0-1.0 | Impact: higher values reject weak coarse loop matches.
-    loop_match_minimum_response_coarse: 0.35
+    loop_match_minimum_response_coarse: 0.45
     # Fine response threshold for loop acceptance.
     # Default: 0.45 | Range: typically 0.0-1.0 | Impact: higher values reduce false loop closures.
-    loop_match_minimum_response_fine: 0.45
+    loop_match_minimum_response_fine: 0.55
+
+    # Slightly decrease these thresholds (e.g., lower coarse to 0.35 and fine to 0.45) 
+    # if the system fails to close loops. Lowering them makes the system less strict about 
+    # accepting a loop closure constraint, which can help in environments where the scan 
+    # matching is less reliable or the robot experiences more drift. 
+    # However, be cautious as setting them too low can increase the risk of false positives 
+    # in loop closure, which can degrade map quality.
 
     # ---------------------------------
     # Correlation search configuration
@@ -895,7 +901,8 @@ slam_toolbox:
 
     # Loop-closure correlation search grid size.
     # Default: 8.0 | Range: > 0.0 m | Impact: larger values tolerate larger drift with more compute.
-    loop_search_space_dimension: 8.0
+    # Increase this value (e.g., from the default 8.0 to 12.0 or 15.0 meters). This dictates the size of the search window used to look for loop closure candidates.
+    loop_search_space_dimension: 12.0
     # Loop-closure grid resolution.
     # Default: 0.05 | Range: > 0.0 m | Impact: finer resolution improves closure precision at CPU cost.
     loop_search_space_resolution: 0.05
@@ -908,7 +915,7 @@ slam_toolbox:
     # ------------------------------
     # Translation penalty away from odometric prior.
     # Default: 0.5 | Range: >= 0.0 | Impact: higher values trust odometry more.
-    distance_variance_penalty: 0.5
+    distance_variance_penalty: 0.15
     # Angular penalty away from odometric prior.
     # Default: 1.0 | Range: >= 0.0 | Impact: higher values constrain heading correction.
     angle_variance_penalty: 1.0
