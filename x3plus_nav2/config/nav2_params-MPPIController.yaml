@@ -796,7 +796,7 @@ slam_toolbox:
     map_update_interval: 5.0
     # Output map resolution in meters/cell.
     # Default: 0.05 | Range: > 0.0 | Impact: smaller value gives finer detail with higher memory/CPU.
-    resolution: 0.025
+    resolution: 0.05
     # Minimum laser range used for rasterization/filtering.
     # Default: 0.0 (typical) | Range: >= sensor min range | Impact: too low accepts invalid near returns; too high removes valid close obstacles.
     min_laser_range: 0.1
