@@ -98,7 +98,7 @@ def generate_launch_description() -> LaunchDescription:
 			description='Full path to the ROS2 parameters file to use for frontier exploration'), 			
 		DeclareLaunchArgument(
 			'slam',
-			default_value='False',
+			default_value='True',
 			description='Whether to run SLAM'),
 		DeclareLaunchArgument(
 			'autostart',

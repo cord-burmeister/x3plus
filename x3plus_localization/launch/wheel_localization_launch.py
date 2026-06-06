@@ -28,12 +28,13 @@ def generate_launch_description():
 
     pkg_localization = get_package_share_directory('x3plus_localization')
 
+    use_sim_time = LaunchConfiguration('use_sim_time')
+
     declare_use_sim_time_cmd = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',
         description='Use simulation (Gazebo) clock if true')
 
-    use_sim_time = LaunchConfiguration('use_sim_time')
 
     imu_filter_madgwick_cmd = Node(
         package='imu_filter_madgwick',
