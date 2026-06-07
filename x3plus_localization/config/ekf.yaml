@@ -76,10 +76,10 @@ ekf_filter_node:
         world_frame: odom           # Defaults to the value of odom_frame if unspecified
         
         odom0: /wheel/odometry
-        odom0_config: [false, false, false,    # x, y, z (Deaktiviert, da absolute Werte driften)
+        odom0_config: [false, false, false,    # x, y, z (Deaktiviert, becasue absolute values are drifting)
                        false, false, false,    # roll, pitch, yaw
-                       true,  false, false,    # vx (Vorwärtsgeschwindigkeit), vy, vz
-                       false, false, true,     # vroll, vpitch, vyaw (Drehgeschwindigkeit)
+                       true,  true, false,    # vx (Vorwärtsgeschwindigkeit), vy, vz
+                       false, false, true,     # vroll, vpitch, vyaw ( Yaw Velocity )
                        false, false, false]    # ax, ay, az
 
         # odom0: /wheel/odometry
@@ -126,10 +126,10 @@ ekf_filter_node:
 
         imu0: /imu/data
         imu0_config: [false, false, false,      # x, y, z
-                      false, false, false,     # roll, pitch, yaw (Falsch im 2D-Modus)
+                      false, false, true,      # roll, pitch, yaw (Falsch im 2D-Modus)
                       false, false, false,      # vx, vy, vz
                       false, false, true,       # vroll, vpitch, vyaw (NUR vyaw für 2D aktivieren)
-                      true,  false, false]      # ax (X-Beschleunigung aktivieren), ay, az        
+                      false,  false, false]      # ax , ay, az        
         # imu0: /imu/data
         # imu0_config: [false, false, false,      # x, y, z
         #         true, true, true,               # roll, pitch, yaw
