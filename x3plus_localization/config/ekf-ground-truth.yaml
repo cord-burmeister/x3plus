@@ -78,19 +78,17 @@ ekf_filter_node:
         base_link_frame: base_footprint  # Defaults to "base_link" if unspecified
         world_frame: odom           # Defaults to the value of odom_frame if unspecified
         
-        # odom0: /wheel/odometry
-        # odom0_config: [false, false, false,    # x, y, z (deactivated, because absolute values are drifting)
-        #                false, false, false,    # roll, pitch, yaw
-        #                true,  true, false,    # vx (speed forward), vy, vz
-        #                false, false, true,     # vroll, vpitch, vyaw ( Yaw Velocity )
-        #                false, false, false]    # ax, ay, az
+        odom0: /wheel/odometry
+        odom0_config: [true, true, false,     # x, y, z (deactivated, because absolute values are drifting)
+                       false, false, true,    # roll, pitch, yaw
+                       true,  true, false,    # vx (speed forward), vy, vz
+                       false, false, true,    # vroll, vpitch, vyaw ( Yaw Velocity )
+                       false, false, false]   # ax, ay, az
 
-        # odom0: /wheel/odometry
-        # odom0_config: [true,  true,  true,      # x, y, z
-        #                false, false, false,     # rollprint_diagnostics, pitch, yaw
-        #                false, false, false,     # vx, vy, vz
-        #                false, false, true,      # vroll, vpitch, vyaw
-        #                false, false, false]     # ax, ay, az
+        # Because it contains velocity, you no longer need differential mode, and the filter will stop diverging
+        odom0_differential: false
+        odom0_relative: false
+
         # If you have high-frequency data or are running with a low frequency parameter value, then you may want to increase
         # the size of the subscription queue so that more measurements are fused.
         # odom0_queue_size: 2
@@ -126,60 +124,6 @@ ekf_filter_node:
         # the thresholds.
         #odom0_pose_rejection_threshold: 5.0
         #odom0_twist_rejection_threshold: 1.0
-
-        # Specify the topic name under the pose parameter array
-        pose0: /pose
-
-        # Configure the 15-state boolean matrix (X, Y, Z, roll, pitch, yaw, and their derivatives)
-        # If you want /odometry/filtered for Nav2 but driven only by ground truth, 
-        # use only pose0 and remove IMU/wheel inputs.
-        pose0_config: [true,  true,  false,
-                false, false, true,
-                false, false, false,
-                false, false, false,
-                false, false, false]
-
-        # Enable or disable differential mode
-        pose0_differential: false
-        pose0_relative: false
-
-        # Force the EKF to inject a tiny bit of "fake" uncertainty so the Kalman filter math doesn't divide by zero. 
-        # Override Gazebo's perfect 0.0 covariance matrix to fix the math crash
-        # Add minor variance (0.001) to X, Y, and Yaw
-        pose0_covariance_matrix: [0.001, 0.0,   0.0,   0.0,   0.0,   0.0,
-                              0.0,   0.001, 0.0,   0.0,   0.0,   0.0,
-                              0.0,   0.0,   1e-9,  0.0,   0.0,   0.0,
-                              0.0,   0.0,   0.0,   1e-9,  0.0,   0.0,
-                              0.0,   0.0,   0.0,   0.0,   1e-9,  0.0,
-                              0.0,   0.0,   0.0,   0.0,   0.0,   0.001]
-
-        # imu0: /imu/data
-        # imu0_config: [false, false, false,      # x, y, z
-        #               false, false, true,      # roll, pitch, yaw (Falsch im 2D-Modus)
-        #               false, false, false,      # vx, vy, vz
-        #               false, false, true,       # vroll, vpitch, vyaw (NUR vyaw für 2D aktivieren)
-        #               false,  false, false]      # ax , ay, az        
-        # imu0: /imu/data
-        # imu0_config: [false, false, false,      # x, y, z
-        #         true, true, true,               # roll, pitch, yaw
-        #         false, false, false,            # vx, vy, vz
-        #         true, true, true,               # vroll, vpitch, vyaw
-        #         false, false, false]            # ax, ay, az
-
-
-        # imu0_differential: false
-        # imu0_relative: true
-
-        # imu0_differential: false
-        # imu0_relative: true
-        # imu0_queue_size: 5
-        # imu0_pose_rejection_threshold: 0.8                 # Note the difference in parameter names
-        # imu0_twist_rejection_threshold: 0.8                #
-        # imu0_linear_acceleration_rejection_threshold: 0.8  #
-
-        # [ADVANCED] Some IMUs automatically remove acceleration due to gravity, and others don't. If yours doesn't, please set
-        # this to true, and *make sure* your data conforms to REP-103, specifically, that the data is in ENU frame.
-        # imu0_remove_gravitational_acceleration: true
 
         # [ADVANCED]  The EKF and UKF models follow a standard predict/correct cycle. During prediction, if there is no
         # acceleration reference, the velocity at time t+1 is simply predicted to be the same as the velocity at time t. During

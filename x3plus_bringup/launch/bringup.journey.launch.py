@@ -83,6 +83,8 @@ def generate_launch_description():
     autostart = LaunchConfiguration('autostart')
     use_composition = LaunchConfiguration('use_composition')
     use_respawn = LaunchConfiguration('use_respawn')
+    use_localization = LaunchConfiguration("use_localization")
+
 #endregion
 
 #region  Launch configuration variables specific to simulation
@@ -136,6 +138,10 @@ def generate_launch_description():
         'use_nav2',
         default_value='False',
         description='Whether to start the x3plus logic'),
+    DeclareLaunchArgument(
+			"use_localization",
+			default_value="ground-truth",
+			description="Which localization to use: ground-truth, wheel."),
 
     DeclareLaunchArgument(
         'map',
@@ -167,7 +173,7 @@ def generate_launch_description():
 				"autostart": LaunchConfiguration("autostart"),
 				"use_composition": LaunchConfiguration("use_composition"),
 				"use_respawn": LaunchConfiguration("use_respawn"),
-
+				"use_localization": LaunchConfiguration("use_localization"),
 			}.items(),
 			condition=IfCondition(
 				PythonExpression(["'", mode, "' in ['simulation', 'companion']"])

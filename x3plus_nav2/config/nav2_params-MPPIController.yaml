@@ -170,18 +170,19 @@ controller_server:
       # Default 0.2. Sampling standard deviation for VY
       vy_std: 0.2
       # Default 0.4. Sampling standard deviation for Wz
-      # This parameter controls the standard deviation for the angular velocity sampling. By adjusting this, you can influence 
-      # how much rotational variation is considered during trajectory sampling.
-      wz_std: 3.2
+      # Increasing this broadens the angular search so the controller considers stronger turns.
+      wz_std: 4.5
       # Default 0.5. Max VX (m/s)
-      vx_max: 0.5
+      # Lowering this makes the controller less eager to translate and more willing to rotate in place.
+      vx_max: 0.25
       # Default -0.35. Min VX (m/s)
       vx_min: -0.35
       # Default 0.5. Max VY in either direction, if holonomic. (m/s)
       vy_max: 0.25
       # Default 1.9. Max WZ (rad/s)
+      # Raising this gives the controller more headroom for fast in-place turns.
       # wz_max: 1.9
-      wz_max: 13.8
+      wz_max: 15.0
       # Default 1. Iteration count in MPPI algorithm. Recommend to keep as 1 and prefer more batches.
       iteration_count: 1
       # Default: 0.3. Selectiveness of trajectories by their costs (The closer this value to 0, the "more" 
@@ -830,7 +831,7 @@ slam_toolbox:
     yaw_covariance_scale: 1.0
     # Use precise min distance/heading checks instead of faster approximations.
     # Default: false | Range: {true,false} | Impact: true improves trigger accuracy with slight compute overhead.
-    check_min_dist_and_heading_precisely: false
+    check_min_dist_and_heading_precisely: true
 
     # ------------------------------
     # Scan matcher / graph controls
@@ -845,8 +846,8 @@ slam_toolbox:
     # Default: 0.5 | Range: >= 0.0 m | Impact: lower value increases map detail and CPU.
     minimum_travel_distance: 0.10
     # Minimum heading change before processing next scan.
-    # Default: 0.5 | Range: >= 0.0 rad | Impact: lower value increases rotational detail and CPU.
-    minimum_travel_heading: 0.11
+    # Default: 0.5 | Range: >= 0.0 rad | Impact: higher value reduces rotation-induced jitter at the cost of slower angular updates.
+    minimum_travel_heading: 0.15
     # Number of scans retained in local buffer.
     # Default: 10 | Range: integer >= 1 | Impact: larger buffer helps loop opportunities but raises memory/compute.
     scan_buffer_size: 40
@@ -918,7 +919,7 @@ slam_toolbox:
     distance_variance_penalty: 0.15
     # Angular penalty away from odometric prior.
     # Default: 1.0 | Range: >= 0.0 | Impact: higher values constrain heading correction.
-    angle_variance_penalty: 1.0
+    angle_variance_penalty: 1.5
     # Fine matching angular search half-window.
     # Default: 0.00349 | Range: > 0.0 rad | Impact: wider range helps recover from drift but increases ambiguity.
     fine_search_angle_offset: 0.00349

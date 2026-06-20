@@ -25,14 +25,16 @@
         <color rgba="0.7 0.7 0.7 1" />
     </material>
     <xacro:property name="ns" value="$(arg ns)" />
-    <xacro:property name="wheel_radius" value="0.05" />
+    <xacro:property name="wheel_radius" value="0.04" />
 
+    <!-- The base_footprint link must be a purely virtual mathematical frame projected 
+     flat on the ground plane. It should never have physical substance. -->
     <link name="base_footprint" />
 
     <link name="base_link">
         <inertial>
             <origin xyz="-0.0304416859098744 4.23384368655101E-05 0.0448234503408059" rpy="0 0 0" />
-            <mass value="1.0754239466482" />
+            <mass value="1.5" />
             <inertia
                 ixx="0.0208831789264125"
                 ixy="2.4618093127858E-06"
@@ -60,10 +62,19 @@
         </collision>
     </link>
 
+    <!-- The joint connecting base_footprint to base_link must always be a fixed joint. -->
     <joint name="base_joint" type="fixed">
         <parent link="base_footprint" />
         <child link="base_link" />
-        <origin xyz="0.0 0.0 0.076" rpy="0 0 0" />
+        <!-- 
+        If your wheel radius is 0.040 (40mm), your base_link origin must be elevated 
+        on the Z-axis by exactly the height of your axle center relative to the ground. 
+        If your offset is set too low (e.g., 0.0 or 0.02), Gazebo spawns the heavy 
+        chassis inside the ground plane. The physics engine panics, tries to push it out,
+         and causes endless jumping. 
+         -->
+        <origin xyz="0.0 0.0 0.08" rpy="0 0 0" />
+        <!-- <origin xyz="0.0 0.0 0.076" rpy="0 0 0" /> -->
     </joint>
 
     <!-- common link-->
@@ -141,7 +152,14 @@
             <collision>
                 <surface>
                     <contact>
-                        <ode />
+                        <ode>
+                            <!-- Contact spring-damper for wheel-ground interaction -->
+                             <!-- Add contact stiffness (kp) and damping (kd) to your wheel links. 
+                              This gives the tires a bit of simulated rubber "squish" to absorb 
+                              physics jitter: -->
+                            <kp>1.0e5</kp>
+                            <kd>10.0</kd>
+                        </ode>
                     </contact>
                     <friction>
                         <ode>
@@ -555,35 +573,61 @@
     </xacro:if>
 
         <gazebo>
-            <plugin name='gz::sim::systems::MecanumDrive' filename='gz-sim-mecanum-drive-system'>
+            <plugin name='gz::sim::systems::DiffDrive' filename='gz-sim-diff-drive-system'>
+                <left_joint>front_left_joint</left_joint>
+                <left_joint>back_left_joint</left_joint>
+                <right_joint>front_right_joint</right_joint>
+                <right_joint>back_right_joint</right_joint>
+                <!-- Lateral distance between left and right wheels -->
+                 <!-- end 2 end is 245.6 mm ; width of the wheel is 37.4 ==> 0.2082 -->
+                <wheel_separation>0.2082</wheel_separation>
+                <!-- Wheel radius -->
+                <wheel_radius>0.040</wheel_radius>
+
+                <odom_publish_frequency>20</odom_publish_frequency> 
+                <odom_topic>/wheel/odometry</odom_topic>
+                <!-- 
+                Using the Robot Localization Package (EKF), ensure your individual sensor plugins 
+                (like Gazebo differential drive plugins or IMUs) have their publish_tf parameter 
+                set to false. 
+                Only the EKF node should publish the final odom -> base_footprint transform. 
+                -->
+                <publish_odom_tf>false</publish_odom_tf>
+                <topic>/cmd_vel</topic>
+                <!-- <tf_topic>/pose</tf_topic> -->
+    
+            </plugin>
+
+<!-- 
+ <plugin name='gz::sim::systems::MecanumDrive' filename='gz-sim-mecanum-drive-system'>
                 <front_left_joint>front_left_joint</front_left_joint>
                 <front_right_joint>front_right_joint</front_right_joint>
                 <back_left_joint>back_left_joint</back_left_joint>
                 <back_right_joint>back_right_joint</back_right_joint>
-                <!-- Lateral distance between left and right wheels -->
-                 <!-- end 2 end is 245.6 mm ; width of the wheel is 37.4 ==> 0.2082 -->
+                <!- - Lateral distance between left and right wheels - ->
+                 <!- - end 2 end is 245.6 mm ; width of the wheel is 37.4 ==> 0.2082 - ->
                 <wheel_separation>0.2082</wheel_separation>
-                <!-- Longitudinal distance between front and back wheels -->
+                <!- - Longitudinal distance between front and back wheels - ->
                 <wheelbase>0.22</wheelbase>
-                <!-- Wheel radius -->
+                <!- - Wheel radius - ->
                 <wheel_radius>0.040</wheel_radius>
 
                 <min_acceleration>-5</min_acceleration>
                 <max_acceleration>5</max_acceleration> 
 
-                <!-- <max_velocity>3.0</max_velocity>
-                <min_velocity>-3.0</min_velocity> -->
-                <!-- <min_jerk>3</min_jerk>
-                <max_jerk>-3</max_jerk> -->
+                <!- - <max_velocity>3.0</max_velocity>
+                <min_velocity>-3.0</min_velocity> - ->
+                <!- - <min_jerk>3</min_jerk>
+                <max_jerk>-3</max_jerk> - ->
 
-                <odom_publish_frequency>10</odom_publish_frequency>
+                <odom_publish_frequency>20</odom_publish_frequency>
                 <odom_topic>/wheel/odometry</odom_topic>
                 <publish_odom_tf>false</publish_odom_tf>
                 <publish_wheel_tf>true</publish_wheel_tf>                
                 <topic>/cmd_vel</topic>
                 <tf_topic>/pose</tf_topic>
     
-            </plugin>
+            </plugin> -->
 
         <!-- 
             The JointStatePublisher system publishes joint state information for a model. The published message type is gz::msgs::Model, and the publication topic is determined by the <topic> parameter.
@@ -777,7 +821,7 @@
     <gazebo reference="imu_link">
         <sensor name="imu_sensor" type="imu">
             <always_on>1</always_on>
-            <update_rate>10</update_rate>
+            <update_rate>20</update_rate>
             <visualize>true</visualize>
             <topic>imu</topic>
             <gz_frame_id>imu_link</gz_frame_id>

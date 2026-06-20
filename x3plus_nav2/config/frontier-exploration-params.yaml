@@ -71,7 +71,7 @@ frontier_explorer:
 
     # Allow a farther frontier fallback until the first successful frontier.
     # Useful if you have a very low range LiDAR or Depth sensor.
-    escape_enabled: true
+    escape_enabled: false
 
     # Return to the recorded start pose once no frontiers remain.
     return_to_start_on_complete: false
@@ -97,7 +97,12 @@ frontier_explorer:
     goal_preemption_min_interval_s: 2.0
 
     # Skip the active frontier goal if it becomes blocked.
-    goal_skip_on_blocked_goal: true
+    # IMPORTANT: keep false. When true, blocked-goal cancels emit STATUS_CANCELED without
+    # progress_timeout_cancel_requested(), so record_failed_frontier_attempt() is never called
+    # and the suppression system never records the failure. The result is an infinite loop through
+    # all live frontiers. With false, Nav2 handles blocked goals (ABORTED), suppression counts
+    # each failure, and after frontier_suppression_attempt_threshold attempts the area is suppressed.
+    goal_skip_on_blocked_goal: false
 
     # Enable the post-goal settle delay after a successful frontier goal.
     # Useful if you want stability over speed. Use if you have slow SLAM & LiDAR configuration. 
@@ -177,7 +182,7 @@ frontier_explorer:
     # Lower values make the explorer avoid inflated-cost regions more aggressively.
     # Higher values allow frontiers closer to obstacles and inflation bands.
     # Value between 0-100. Use higher values if exploration skips very small areas.
-    occ_threshold: 35
+    occ_threshold: 20
 
     # Minimum connected frontier size accepted by WFD, measured in cells.
     # This removes tiny fragments caused by noise or partial unknown boundaries.
@@ -241,7 +246,8 @@ frontier_explorer:
     frontier_suppression_timeout_s: 90.0
 
     # Maximum allowed time in seconds without meaningful progress before a frontier goal is canceled.
-    frontier_suppression_no_progress_timeout_s: 20.0
+    # Reduced from 20.0 so stuck goals near truly blocked frontiers are cancelled and suppressed faster.
+    frontier_suppression_no_progress_timeout_s: 12.0
 
     # Minimum distance_remaining improvement in meters required to count as progress.
     frontier_suppression_progress_epsilon_m: 0.25
