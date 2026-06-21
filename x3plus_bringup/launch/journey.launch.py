@@ -50,6 +50,7 @@ def generate_launch_description() -> LaunchDescription:
 	robot_name = LaunchConfiguration("robot_name")
 	mode = LaunchConfiguration("mode")
 	use_case = LaunchConfiguration("use_case")
+	use_localization = LaunchConfiguration("use_localization")
 
 
 
@@ -69,6 +70,12 @@ def generate_launch_description() -> LaunchDescription:
 			default_value="slam",
 			description="Use case for the robot: drive, slam, explore, explore-lite, explore-roadmap, explore-frontier.",
 		),
+		DeclareLaunchArgument(
+			"use_localization",
+			default_value="ground-truth",
+			description="Which localization to use: ground-truth, wheel.",
+		),
+	
 		DeclareLaunchArgument(
 			"robot_name",
 			default_value="x3plus_bot",
@@ -141,13 +148,13 @@ def generate_launch_description() -> LaunchDescription:
 		OpaqueFunction(
             function=lambda context: validate_enum_arg(
                 context,
-                'use_bridge',
-                ['none', 'bridge', 'foxglove']
+                'use_localization',
+                ['ground-truth', 'wheel']
             )
         ),
 		# endregion
 
-		#region Include localization launch files
+		#region Include handling laser launch files
 		IncludeLaunchDescription(
 			PythonLaunchDescriptionSource(
 				PathJoinSubstitution([
@@ -163,6 +170,29 @@ def generate_launch_description() -> LaunchDescription:
 				PythonExpression(["'", mode, "' in ['simulation', 'companion']"])
 			),
 		),
+
+		# endregion
+
+		#region Include handling different localization launch files based on the use_localization argument
+
+		IncludeLaunchDescription(
+			PythonLaunchDescriptionSource(
+				PathJoinSubstitution([
+					FindPackageShare("x3plus_localization"),
+					"launch",
+					"ground_truth_localization_launch.py",
+				])
+			),
+			launch_arguments={
+				"use_sim_time": LaunchConfiguration("use_sim_time"),
+			}.items(),
+			condition=IfCondition(
+				PythonExpression(["'", mode, "' in ['simulation', 'companion']",
+                      	" and ",
+					"('", use_localization, "' in ['ground-truth', 'wheel'])"
+                		])
+			),
+		),
 		IncludeLaunchDescription(
 			PythonLaunchDescriptionSource(
 				PathJoinSubstitution([
@@ -175,7 +205,10 @@ def generate_launch_description() -> LaunchDescription:
 				"use_sim_time": LaunchConfiguration("use_sim_time"),
 			}.items(),
 			condition=IfCondition(
-				PythonExpression(["'", mode, "' in ['simulation', 'companion']"])
+				PythonExpression(["'", mode, "' in ['simulation', 'companion']",
+                      	" and ",
+					"('", use_localization, "' in ['wheel'])"
+                		])
 			),
 		),
 		#endregion
