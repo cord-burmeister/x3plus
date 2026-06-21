@@ -787,10 +787,14 @@
 
             -->
             <!-- <frame_id >laser_link</frame_id > -->
-            <gz_frame_id>laser_link</gz_frame_id >
-                <ray>
+            <gz_frame_id>laser_link</gz_frame_id >           
+                <!-- Stops Gazebo rendering every ray visually — biggest free RTF gain -->
+                 <visualize>false</visualize>                
+                 <ray>
                     <scan>
                         <horizontal>
+                            <!-- Halves GPU ray-cast cost; 360° at 1°/ray is enough for 2D SLAM-->
+                            <!-- <samples>360</samples> -->
                             <samples>720</samples>
                             <resolution>1</resolution>
                             <min_angle>-3.14159</min_angle>

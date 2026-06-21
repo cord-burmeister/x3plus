@@ -806,8 +806,8 @@ slam_toolbox:
     max_laser_range: 10.0
     # Minimum time between accepted scans.
     # Default: 0.0-0.5 (depends on config) | Range: >= 0.0 s | Impact: higher values reduce CPU and update rate.
-    minimum_time_interval: 0.15
-    # TF lookup timeout.
+    # Keep low enough to process 10 Hz simulated scans while avoiding overfitting to noisy consecutive scans.
+    minimum_time_interval: 0.10
     # Default: 0.5 | Range: >= 0.0 s | Impact: higher values tolerate TF lag but can add processing latency.
     transform_timeout: 0.2
     # TF history buffer duration.
@@ -844,13 +844,13 @@ slam_toolbox:
     use_scan_barycenter: true
     # Minimum translation before processing next scan.
     # Default: 0.5 | Range: >= 0.0 m | Impact: lower value increases map detail and CPU.
-    minimum_travel_distance: 0.10
+    minimum_travel_distance: 0.15
     # Minimum heading change before processing next scan.
     # Default: 0.5 | Range: >= 0.0 rad | Impact: higher value reduces rotation-induced jitter at the cost of slower angular updates.
     minimum_travel_heading: 0.15
     # Number of scans retained in local buffer.
     # Default: 10 | Range: integer >= 1 | Impact: larger buffer helps loop opportunities but raises memory/compute.
-    scan_buffer_size: 40
+    scan_buffer_size: 20
     # Maximum distance for scans to remain in local buffer.
     # Default: 10.0 | Range: > 0.0 m | Impact: larger values keep broader context and can slow matching.
     scan_buffer_maximum_scan_distance: 20.0
@@ -919,7 +919,7 @@ slam_toolbox:
     distance_variance_penalty: 0.15
     # Angular penalty away from odometric prior.
     # Default: 1.0 | Range: >= 0.0 | Impact: higher values constrain heading correction.
-    angle_variance_penalty: 1.5
+    angle_variance_penalty: 1.0
     # Fine matching angular search half-window.
     # Default: 0.00349 | Range: > 0.0 rad | Impact: wider range helps recover from drift but increases ambiguity.
     fine_search_angle_offset: 0.00349
