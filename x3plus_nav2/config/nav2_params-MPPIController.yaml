@@ -60,7 +60,8 @@ bt_navigator:
     global_frame: map
     robot_base_frame: base_footprint
     odom_topic: "/odometry/filtered"
-    bt_loop_duration: 10
+    # Setting the BT loop duration to 100ms allows for a more responsive navigation experience, especially in dynamic environments.
+    bt_loop_duration: 100
     default_server_timeout: 20
     wait_for_service_timeout: 1000
     action_server_result_timeout: 900.0
@@ -808,7 +809,7 @@ slam_toolbox:
     minimum_time_interval: 0.15
     # TF lookup timeout.
     # Default: 0.5 | Range: >= 0.0 s | Impact: higher values tolerate TF lag but can add processing latency.
-    transform_timeout: 0.2
+    transform_timeout: 0.5
     # TF history buffer duration.
     # Default: 30.0 | Range: > 0.0 s | Impact: larger buffers help delayed lookups and bag replay at memory cost.
     tf_buffer_duration: 30.0
