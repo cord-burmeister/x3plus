@@ -141,13 +141,6 @@ def generate_launch_description() -> LaunchDescription:
 		OpaqueFunction(
             function=lambda context: validate_enum_arg(
                 context,
-                'use_ui',
-                ['cockpit', 'rviz', 'none']
-            )
-        ),
-		OpaqueFunction(
-            function=lambda context: validate_enum_arg(
-                context,
                 'use_localization',
                 ['ground-truth', 'wheel']
             )
@@ -167,7 +160,7 @@ def generate_launch_description() -> LaunchDescription:
 				"use_sim_time": LaunchConfiguration("use_sim_time"),
 			}.items(),
 			condition=IfCondition(
-				PythonExpression(["'", mode, "' in ['simulation', 'companion']"])
+				PythonExpression(["'", mode, "' in ['simulation', 'companion', 'hil']"])
 			),
 		),
 
@@ -187,9 +180,9 @@ def generate_launch_description() -> LaunchDescription:
 				"use_sim_time": LaunchConfiguration("use_sim_time"),
 			}.items(),
 			condition=IfCondition(
-				PythonExpression(["'", mode, "' in ['simulation', 'companion']",
+				PythonExpression(["'", mode, "' in ['simulation', 'companion', 'hil']",
                       	" and ",
-					"('", use_localization, "' in ['ground-truth', 'wheel'])"
+					"('", use_localization, "' in ['ground-truth'])"
                 		])
 			),
 		),
@@ -205,7 +198,7 @@ def generate_launch_description() -> LaunchDescription:
 				"use_sim_time": LaunchConfiguration("use_sim_time"),
 			}.items(),
 			condition=IfCondition(
-				PythonExpression(["'", mode, "' in ['simulation', 'companion']",
+				PythonExpression(["'", mode, "' in ['simulation', 'companion', 'hil']",
                       	" and ",
 					"('", use_localization, "' in ['wheel'])"
                 		])
@@ -234,7 +227,7 @@ def generate_launch_description() -> LaunchDescription:
 			condition=IfCondition(
 				PythonExpression(["'", use_case, "' in ['slam', 'explore', 'explore-lite', 'explore-frontier', 'explore-roadmap']",
 					" and ",
-					"('", mode,"' in ['simulation', 'companion'])"
+					"('", mode,"' in ['simulation', 'companion', 'hil'])"
 				])
 			),
 		),
@@ -258,7 +251,7 @@ def generate_launch_description() -> LaunchDescription:
 				PythonExpression([
 					"('", use_case, "' in ['explore', 'explore-frontier']) ", 
 					" and ",
-					"('", mode,"' in ['simulation', 'companion'])",
+					"('", mode,"' in ['simulation', 'companion', 'hil'])",
 				])
 			),
 		),
