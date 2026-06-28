@@ -79,7 +79,7 @@ ekf_filter_node:
         world_frame: odom           # Defaults to the value of odom_frame if unspecified
         
         odom0: /wheel/odometry
-        odom0_config: [true, true, false,     # x, y, z (deactivated, because absolute values are drifting)
+        odom0_config: [false, false, false,     # x, y, z (deactivated, because absolute values are drifting)
                        false, false, true,    # roll, pitch, yaw
                        true,  true, false,    # vx (speed forward), vy, vz
                        false, false, true,    # vroll, vpitch, vyaw ( Yaw Velocity )

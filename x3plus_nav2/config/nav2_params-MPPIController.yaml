@@ -176,7 +176,7 @@ controller_server:
       # Default 0.4. Sampling standard deviation for Wz
       # This parameter controls the standard deviation for the angular velocity sampling. By adjusting this, you can influence 
       # how much rotational variation is considered during trajectory sampling.
-      wz_std: 4.5
+      wz_std: 0.6
       # Default 0.5. Max VX (m/s)
       vx_max: 0.5
       # Default -0.35. Min VX (m/s)
@@ -185,7 +185,7 @@ controller_server:
       vy_max: 0.25
       # Default 1.9. Max WZ (rad/s)
       # wz_max: 1.9
-      wz_max: 13.8
+      wz_max: 1.9
       # Default 1. Iteration count in MPPI algorithm. Recommend to keep as 1 and prefer more batches.
       iteration_count: 1
       # Default: 0.3. Selectiveness of trajectories by their costs (The closer this value to 0, the "more" 
@@ -291,7 +291,7 @@ controller_server:
         # Default 1. Power order to apply to term.
         cost_power: 1
         # Default 3.0. Weight to apply to critic term.
-        cost_weight: 7.0
+        cost_weight: 9.0
         # Default 0.5. Minimal distance between robot and goal above which angle goal cost considered.
         # There is a correlation to the goal checker, becasue it might rotate to the target angle too aggressivly
         # outside the    general_goal_checker:  xy_goal_tolerance: 0.25 distance when rotating parameter wz_std: 3.2
@@ -304,7 +304,7 @@ controller_server:
         # Power order to apply to term.
         cost_power: 1
         # Weight to apply to critic term.
-        cost_weight: 5.0
+        cost_weight: 3.0
         # Distance (m) between robot and goal to stop considering preferring forward and allow goal critics to take over.
         threshold_to_consider: 0.5
       # ----------------------------------------------------------------------------------------------------
@@ -808,9 +808,9 @@ slam_toolbox:
     # Maximum laser range used for rasterization/filtering.
     # Default: 10.0 (sample), sensor-dependent | Range: <= sensor max range | Impact: too high introduces noisy far hits; too low truncates map extent.
     max_laser_range: 10.0
-    # Minimum time between accepted scans.
+    # Minimum time between accepted scans. Ignore scans that arrive too quickly
     # Default: 0.0-0.5 (depends on config) | Range: >= 0.0 s | Impact: higher values reduce CPU and update rate.
-    minimum_time_interval: 0.15
+    minimum_time_interval: 0.2
     # TF lookup timeout.
     # Default: 0.5 | Range: >= 0.0 s | Impact: higher values tolerate TF lag but can add processing latency.
     transform_timeout: 0.5
