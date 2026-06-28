@@ -160,7 +160,7 @@ def generate_launch_description() -> LaunchDescription:
 				"use_sim_time": LaunchConfiguration("use_sim_time"),
 			}.items(),
 			condition=IfCondition(
-				PythonExpression(["'", mode, "' in ['simulation', 'companion', 'hil']"])
+				PythonExpression(["'", mode, "' in ['simulation', 'companion', 'hil', 'robot']",])
 			),
 		),
 
@@ -180,7 +180,7 @@ def generate_launch_description() -> LaunchDescription:
 				"use_sim_time": LaunchConfiguration("use_sim_time"),
 			}.items(),
 			condition=IfCondition(
-				PythonExpression(["'", mode, "' in ['simulation', 'companion', 'hil']",
+				PythonExpression(["'", mode, "' in ['simulation', 'companion', 'hil', 'robot']",
                       	" and ",
 					"('", use_localization, "' in ['ground-truth'])"
                 		])
@@ -198,7 +198,7 @@ def generate_launch_description() -> LaunchDescription:
 				"use_sim_time": LaunchConfiguration("use_sim_time"),
 			}.items(),
 			condition=IfCondition(
-				PythonExpression(["'", mode, "' in ['simulation', 'companion', 'hil']",
+				PythonExpression(["'", mode, "' in ['simulation', 'companion', 'hil', 'robot']",
                       	" and ",
 					"('", use_localization, "' in ['wheel'])"
                 		])
@@ -227,7 +227,7 @@ def generate_launch_description() -> LaunchDescription:
 			condition=IfCondition(
 				PythonExpression(["'", use_case, "' in ['slam', 'explore', 'explore-lite', 'explore-frontier', 'explore-roadmap']",
 					" and ",
-					"('", mode,"' in ['simulation', 'companion', 'hil'])"
+					"('", mode,"' in ['simulation', 'companion', 'hil', 'robot'])"
 				])
 			),
 		),
@@ -251,7 +251,7 @@ def generate_launch_description() -> LaunchDescription:
 				PythonExpression([
 					"('", use_case, "' in ['explore', 'explore-frontier']) ", 
 					" and ",
-					"('", mode,"' in ['simulation', 'companion', 'hil'])",
+					"('", mode,"' in ['simulation', 'companion', 'hil', 'robot'])",
 				])
 			),
 		),
